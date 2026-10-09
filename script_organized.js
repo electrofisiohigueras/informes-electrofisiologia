@@ -258,11 +258,16 @@ function initializeElements() {
 // 4. FUNCIONES DE UTILIDAD
 // ===================================================================
 
+// Escapa texto para inserción segura en HTML, tanto en contenido como en
+// atributos (también escapa comillas, que textContent/innerHTML no escapa).
 function escapeHtml(text) {
     if (!text) return '';
-    const div = document.createElement('div');
-    div.textContent = text;
-    return div.innerHTML;
+    return String(text)
+        .replace(/&/g, '&#38;')
+        .replace(/</g, '&#60;')
+        .replace(/>/g, '&#62;')
+        .replace(/"/g, '&#34;')
+        .replace(/'/g, '&#39;');
 }
 
 // Convierte una fecha a formato ISO yyyy-mm-dd (para input[type="date"])
@@ -677,7 +682,7 @@ function updateCommonDataDropdowns() {
     if (elements.commune) {
         elements.commune.innerHTML = '<option value="">Seleccione una comuna</option>' +
             appState.commonData.communes.map(commune =>
-                `<option value="${commune}">${commune}</option>`
+                `<option value="${escapeHtml(commune)}">${escapeHtml(commune)}</option>`
             ).join('');
         attachAddNewOption(elements.commune, 'Nueva comuna', (value) => {
             if (!addToCommonArray(appState.commonData.communes, value, 'La comuna')) return false;
@@ -690,7 +695,7 @@ function updateCommonDataDropdowns() {
     if (elements.healthInsurance) {
         elements.healthInsurance.innerHTML = '<option value="">Seleccione previsión</option>' +
             appState.commonData.insurances.map(insurance =>
-                `<option value="${insurance}">${insurance}</option>`
+                `<option value="${escapeHtml(insurance)}">${escapeHtml(insurance)}</option>`
             ).join('');
         attachAddNewOption(elements.healthInsurance, 'Nueva previsión', (value) => {
             if (!addToCommonArray(appState.commonData.insurances, value, 'La previsión')) return false;
@@ -703,7 +708,7 @@ function updateCommonDataDropdowns() {
     if (elements.origin) {
         elements.origin.innerHTML = '<option value="">Seleccione procedencia</option>' +
             appState.commonData.origins.map(origin =>
-                `<option value="${origin}">${origin}</option>`
+                `<option value="${escapeHtml(origin)}">${escapeHtml(origin)}</option>`
             ).join('');
         attachAddNewOption(elements.origin, 'Nueva procedencia', (value) => {
             if (!addToCommonArray(appState.commonData.origins, value, 'La procedencia')) return false;
@@ -716,7 +721,7 @@ function updateCommonDataDropdowns() {
     if (elements.entryDiagnosisSelect) {
         elements.entryDiagnosisSelect.innerHTML = '<option value="">Seleccione diagnóstico</option>' +
             appState.commonData.entryDiagnoses.map(diagnosis =>
-                `<option value="${diagnosis}">${diagnosis}</option>`
+                `<option value="${escapeHtml(diagnosis)}">${escapeHtml(diagnosis)}</option>`
             ).join('') + '<option value="custom">Otro (especifique)</option>';
         attachAddNewOption(elements.entryDiagnosisSelect, 'Nuevo diagnóstico', (value) => {
             if (!addToCommonArray(appState.commonData.entryDiagnoses, value, 'El diagnóstico')) return false;
@@ -729,7 +734,7 @@ function updateCommonDataDropdowns() {
     if (elements.exitDiagnosisSelect) {
         elements.exitDiagnosisSelect.innerHTML = '<option value="">Seleccione diagnóstico</option>' +
             appState.commonData.exitDiagnoses.map(diagnosis =>
-                `<option value="${diagnosis}">${diagnosis}</option>`
+                `<option value="${escapeHtml(diagnosis)}">${escapeHtml(diagnosis)}</option>`
             ).join('') + '<option value="custom">Otro (especifique)</option>';
         attachAddNewOption(elements.exitDiagnosisSelect, 'Nuevo diagnóstico', (value) => {
             if (!addToCommonArray(appState.commonData.exitDiagnoses, value, 'El diagnóstico')) return false;
@@ -1178,7 +1183,7 @@ function renderMeasurements() {
                     <select class="form-input w-full p-3 border border-gray-200 rounded-lg param-value device-model-select focus:ring-2 focus:ring-blue-200 focus:border-blue-300 transition-colors bg-white" 
                             data-param-index="${index}" data-measurement-id="${measurement.id}" ${isDisabled ? 'disabled' : ''}>
                         <option value="">${placeholderText}</option>
-                        ${availableModels.map(model => `<option value="${model}" ${param.value === model ? 'selected' : ''}>${model}</option>`).join('')}
+                        ${availableModels.map(model => `<option value="${escapeHtml(model)}" ${param.value === model ? 'selected' : ''}>${escapeHtml(model)}</option>`).join('')}
                         ${isDisabled ? '' : '<option value="__add_new__">➕ Agregar nuevo...</option>'}
                     </select>
                 `;
@@ -1574,6 +1579,61 @@ function exportData() {
     }
 }
 
+// Valida el esquema de un archivo de datos importado antes de aplicarlo.
+// Devuelve un arreglo con los errores encontrados (vacío si es válido).
+function validateImportedData(data) {
+    const errors = [];
+    const isString = (v) => typeof v === 'string' && v.trim().length > 0;
+    const isStringArray = (v) => Array.isArray(v) && v.every(isString);
+    const isObject = (v) => v !== null && typeof v === 'object' && !Array.isArray(v);
+
+    if (!isObject(data)) {
+        return ['el archivo debe contener un objeto JSON con los datos de la aplicación.'];
+    }
+
+    if (data.procedures !== undefined &&
+        !(Array.isArray(data.procedures) && data.procedures.every(p =>
+            isObject(p) && isString(p.id) && isString(p.name) && isString(p.code)))) {
+        errors.push('"procedures" debe ser una lista de procedimientos con id, nombre y código.');
+    }
+
+    if (data.templates !== undefined &&
+        !(Array.isArray(data.templates) && data.templates.every(t =>
+            isObject(t) && isString(t.id) && isString(t.name)))) {
+        errors.push('"templates" debe ser una lista de plantillas con id y nombre.');
+    }
+
+    if (data.staff !== undefined &&
+        !(Array.isArray(data.staff) && data.staff.every(s =>
+            isObject(s) && isString(s.id) && isString(s.name) && isString(s.role)))) {
+        errors.push('"staff" debe ser una lista de personal con id, nombre y rol.');
+    }
+
+    if (data.commonData !== undefined) {
+        if (!isObject(data.commonData)) {
+            errors.push('"commonData" debe ser un objeto.');
+        } else {
+            ['communes', 'insurances', 'origins', 'entryDiagnoses', 'exitDiagnoses',
+             'deviceBrands', 'deviceTypes', 'stimulationPolarities', 'indications'].forEach(key => {
+                if (data.commonData[key] !== undefined && !isStringArray(data.commonData[key])) {
+                    errors.push('"commonData.' + key + '" debe ser una lista de textos.');
+                }
+            });
+            const models = data.commonData.deviceModelsByTypeAndBrand;
+            if (models !== undefined) {
+                const validModels = isObject(models) && Object.values(models).every(brands =>
+                    isObject(brands) && Object.values(brands).every(isStringArray)
+                );
+                if (!validModels) {
+                    errors.push('"commonData.deviceModelsByTypeAndBrand" tiene un formato inválido.');
+                }
+            }
+        }
+    }
+
+    return errors;
+}
+
 function importData(event) {
     const file = event.target.files[0];
     if (!file) return;
@@ -1581,6 +1641,11 @@ function importData(event) {
     reader.onload = async function(e) {
         try {
             const importedData = JSON.parse(e.target.result);
+            const validationErrors = validateImportedData(importedData);
+            if (validationErrors.length > 0) {
+                showNotification('Archivo inválido: ' + validationErrors[0], 'error');
+                return;
+            }
             const ok = await showConfirmDialog(
                 'Importar datos',
                 '¿Está seguro de que desea importar estos datos? Esto sobrescribirá los datos actuales.',
@@ -2188,8 +2253,8 @@ function updateCommonDataList(dataType, listId, deleteClass) {
     if (!list) return;
     list.innerHTML = appState.commonData[dataType].map(item => `
         <div class="flex justify-between items-center bg-white p-2 rounded shadow mb-2 hover:bg-gray-50">
-            <span class="flex-grow">${item}</span>
-            <button type="button" class="text-red-500 hover:text-red-700 ml-2 ${deleteClass}" data-value="${item}" title="Eliminar">
+            <span class="flex-grow">${escapeHtml(item)}</span>
+            <button type="button" class="text-red-500 hover:text-red-700 ml-2 ${deleteClass}" data-value="${escapeHtml(item)}" title="Eliminar">
                 <i class="fas fa-trash"></i>
             </button>
         </div>
@@ -3842,7 +3907,7 @@ function createStaffCheckbox(person, role) {
     selectionBox.className = 'staff-selection-box p-3 rounded cursor-pointer transition-all duration-200 bg-white hover:bg-gray-50 border border-gray-200';
     selectionBox.innerHTML = `
         <div class="flex items-center justify-between">
-            <span class="text-sm font-medium">${person.name}</span>
+            <span class="text-sm font-medium">${escapeHtml(person.name)}</span>
             <i class="fas fa-check text-green-500 hidden check-icon"></i>
         </div>
     `;
