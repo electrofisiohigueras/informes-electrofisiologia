@@ -1,0 +1,528 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistema de Informes Médicos</title>
+    <script src="vendor/tailwind/tailwind.js"></script>
+    <link rel="stylesheet" href="vendor/fontawesome/css/all.min.css">
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="report-styles.css">
+
+</head>
+<body class="bg-gray-50">
+    <!-- Indicador de guardado -->
+    <div id="saveIndicator" class="save-indicator hidden">
+        <i class="fas fa-check-circle"></i>
+        <span>Guardado</span>
+    </div>
+
+    <div class="container mx-auto px-4 py-6">
+        <!-- Header -->
+        <header class="app-header bg-gradient-to-r from-blue-700 to-blue-500 text-white rounded-xl shadow-md p-5 mb-6 no-print">
+            <div class="flex flex-wrap justify-between items-center gap-3">
+                <div>
+                    <h1 class="text-2xl font-bold">Sistema de Informes Médicos</h1>
+                    <p class="text-blue-100 text-sm"><i class="fas fa-heart-pulse mr-1"></i>Registro de procedimientos ELECTROFISIOLOGÍA</p>
+                </div>
+                <div class="flex flex-wrap items-center gap-2 header-buttons">
+                    <button id="newReportBtn" class="btn btn-primary" title="Crear un nuevo informe en blanco">
+                        <i class="fas fa-plus mr-1"></i> Nuevo
+                    </button>
+                    <button id="wizardBtn" class="btn bg-green-600 hover:bg-green-700" title="Usar asistente paso a paso para crear informe">
+                        <i class="fas fa-wand-magic-sparkles mr-1"></i> Asistente
+                    </button>
+                    <button id="proceduresBtn" class="btn btn-secondary" title="Administrar procedimientos disponibles">
+                        <i class="fas fa-list-ul mr-1"></i> Procedimientos
+                    </button>
+                    
+                    <div class="dropdown">
+                        <button class="dropdown-btn" title="Opciones de configuración">
+                            <i class="fas fa-cog mr-1"></i> Opciones
+                            <i class="fas fa-chevron-down ml-1"></i>
+                        </button>
+                        <div class="dropdown-content hidden">
+                            <button id="templatesBtn">
+                                <i class="fas fa-file-medical mr-2"></i> Plantillas
+                            </button>
+                            <button id="staffBtn">
+                                <i class="fas fa-users mr-2"></i> Personal
+                            </button>
+                            <button id="commonDataBtn">
+                                <i class="fas fa-database mr-2"></i> Datos Comunes
+                            </button>
+                            <button id="devicesBtn">
+                                <i class="fas fa-microchip mr-2"></i> Dispositivos
+                            </button>
+                            <button id="exportBtn">
+                                <i class="fas fa-file-export mr-2"></i> Exportar
+                            </button>
+                            <button id="importTriggerBtn">
+                                <i class="fas fa-file-import mr-2"></i> Importar
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <button id="printBtn" class="btn bg-blue-600 hover:bg-blue-700" title="Imprimir el informe actual">
+                        <i class="fas fa-print mr-1"></i> Imprimir
+                    </button>
+                    <input type="file" id="importFile" class="hidden" accept=".json">
+                </div>
+            </div>
+        </header>
+
+        <main>
+            <!-- Sección de Datos Comunes -->
+            <div id="common-data-section" class="feature-section hidden">
+                <div class="card p-5 mb-6">
+                    <div class="flex justify-between items-center mb-4">
+                        <h2 class="section-title">Gestión de Datos Comunes</h2>
+                        <button id="backFromCommonDataBtn" class="btn btn-secondary">
+                            <i class="fas fa-arrow-left mr-1"></i> Volver
+                        </button>
+                    </div>
+                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                        <!-- Columna 1: Ubicación y Administración -->
+                        <div>
+                            <!-- Sección de Comunas -->
+                            <div class="mb-6">
+                                <h3 class="text-lg font-semibold mb-3">Comunas</h3>
+                                <div class="flex gap-2 mb-2">
+                                    <input type="text" id="newCommune" placeholder="Nueva comuna" class="form-input flex-grow capitalize">
+                                    <button type="button" id="addCommune" class="btn bg-blue-600 text-white hover:bg-blue-700">
+                                        <i class="fas fa-plus"></i>
+                                    </button>
+                                </div>
+                                <div id="communesList" class="max-h-60 overflow-y-auto border rounded"></div>
+                            </div>
+
+                            <!-- Sección de Previsiones -->
+                            <div class="mb-6">
+                                <h3 class="text-lg font-semibold mb-3">Previsiones</h3>
+                                <div class="flex gap-2 mb-2">
+                                    <input type="text" id="newInsurance" placeholder="Nueva previsión" class="form-input flex-grow">
+                                    <button type="button" id="addInsurance" class="btn bg-blue-600 text-white hover:bg-blue-700">
+                                        <i class="fas fa-plus"></i>
+                                    </button>
+                                </div>
+                                <div id="insurancesList" class="max-h-60 overflow-y-auto border rounded"></div>
+                            </div>
+
+                            <!-- Sección de Procedencias -->
+                            <div class="mb-6">
+                                <h3 class="text-lg font-semibold mb-3">Procedencias</h3>
+                                <div class="flex gap-2 mb-2">
+                                    <input type="text" id="newOrigin" placeholder="Nueva procedencia" class="form-input flex-grow capitalize">
+                                    <button type="button" id="addOrigin" class="btn bg-blue-600 text-white hover:bg-blue-700">
+                                        <i class="fas fa-plus"></i>
+                                    </button>
+                                </div>
+                                <div id="originsList" class="max-h-60 overflow-y-auto border rounded"></div>
+                            </div>
+                        </div>
+
+                        <!-- Columna 2: Diagnósticos -->
+                        <div>
+                            <!-- Diagnósticos de Ingreso -->
+                            <div class="mb-6">
+                                <h3 class="text-lg font-semibold mb-3">Diagnósticos de Ingreso</h3>
+                                <div class="flex gap-2 mb-2">
+                                    <input type="text" id="newEntryDiagnosis" placeholder="Nuevo diagnóstico" class="form-input flex-grow capitalize">
+                                    <button type="button" id="addEntryDiagnosis" class="btn bg-blue-600 text-white hover:bg-blue-700">
+                                        <i class="fas fa-plus"></i>
+                                    </button>
+                                </div>
+                                <div id="entryDiagnosesList" class="max-h-60 overflow-y-auto border rounded"></div>
+                            </div>
+
+                            <!-- Diagnósticos de Egreso -->
+                            <div class="mb-6">
+                                <h3 class="text-lg font-semibold mb-3">Diagnósticos de Egreso</h3>
+                                <div class="flex gap-2 mb-2">
+                                    <input type="text" id="newExitDiagnosis" placeholder="Nuevo diagnóstico" class="form-input flex-grow capitalize">
+                                    <button type="button" id="addExitDiagnosis" class="btn bg-blue-600 text-white hover:bg-blue-700">
+                                        <i class="fas fa-plus"></i>
+                                    </button>
+                                </div>
+                                <div id="exitDiagnosesList" class="max-h-60 overflow-y-auto border rounded"></div>
+                            </div>
+                        </div>
+
+                        <!-- Columna 3: Dispositivos -->
+                        <div>
+                            <!-- Marcas de Dispositivos -->
+                            <div class="mb-6">
+                                <h3 class="text-lg font-semibold mb-3">Marcas de Dispositivos</h3>
+                                <div class="flex gap-2 mb-2">
+                                    <input type="text" id="newDeviceBrand" placeholder="Nueva marca" class="form-input flex-grow">
+                                    <button type="button" id="addDeviceBrand" class="btn bg-blue-600 text-white hover:bg-blue-700">
+                                        <i class="fas fa-plus"></i>
+                                    </button>
+                                </div>
+                                <div id="deviceBrandsList" class="max-h-60 overflow-y-auto border rounded"></div>
+                            </div>
+
+                            <!-- Tipos de Dispositivos -->
+                            <div class="mb-6">
+                                <h3 class="text-lg font-semibold mb-3">Tipos de Dispositivos</h3>
+                                <div class="flex gap-2 mb-2">
+                                    <input type="text" id="newDeviceType" placeholder="Nuevo tipo" class="form-input flex-grow">
+                                    <button type="button" id="addDeviceType" class="btn bg-blue-600 text-white hover:bg-blue-700">
+                                        <i class="fas fa-plus"></i>
+                                    </button>
+                                </div>
+                                <div id="deviceTypesList" class="max-h-60 overflow-y-auto border rounded"></div>
+                            </div>
+
+                            <!-- Indicaciones Post-procedimiento -->
+                            <div class="mb-6">
+                                <h3 class="text-lg font-semibold mb-3">Indicaciones Post-procedimiento</h3>
+                                <div class="flex gap-2 mb-2">
+                                    <input type="text" id="commonDataNewIndication" placeholder="Nueva indicación" class="form-input flex-grow">
+                                    <button type="button" id="commonDataAddIndicationBtn" class="btn bg-blue-600 text-white hover:bg-blue-700">
+                                        <i class="fas fa-plus"></i>
+                                    </button>
+                                </div>
+                                <div id="commonDataIndicationsList" class="max-h-60 overflow-y-auto border rounded"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Sección de Procedimientos -->
+            <div id="procedures-section" class="feature-section hidden">
+                <div class="card p-5 mb-6">
+                    <div class="flex justify-between items-center mb-4">
+                        <h2 class="section-title">Gestión de Procedimientos</h2>
+                        <button id="backToMainBtn" class="btn btn-secondary">
+                            <i class="fas fa-arrow-left mr-1"></i> Volver
+                        </button>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+                        <div>
+                            <h3 class="text-lg font-semibold mb-3">Procedimientos Disponibles</h3>
+                            <div class="procedure-list" id="proceduresListContainer">
+                                <p class="text-gray-500 text-center py-6">No hay procedimientos registrados</p>
+                            </div>
+                        </div>
+                        <div>
+                            <h3 class="text-lg font-semibold mb-3" id="procedureFormTitle">Agregar Nuevo Procedimiento</h3>
+                            <div class="form-group">
+                                <label for="newProcedureName" class="form-label">Nombre del Procedimiento <span class="text-red-500">*</span></label>
+                                <input id="newProcedureName" type="text" class="form-input" placeholder="Nombre del procedimiento">
+                            </div>
+                            <div class="form-group">
+                                <label for="newProcedureCode" class="form-label">Código <span class="text-red-500">*</span></label>
+                                <input id="newProcedureCode" type="text" class="form-input" placeholder="Código del procedimiento">
+                            </div>
+                            <div class="form-group">
+                                <label for="newProcedureDescription" class="form-label">Descripción</label>
+                                <textarea id="newProcedureDescription" class="form-input form-textarea" placeholder="Descripción del procedimiento"></textarea>
+                            </div>
+                            <div class="flex gap-2">
+                                <button id="saveProcedureBtn" class="btn btn-primary">
+                                    <i class="fas fa-save mr-1"></i> Guardar
+                                </button>
+                                <button id="cancelEditProcedureBtn" class="btn bg-gray-500 text-white hover:bg-gray-600 hidden">
+                                    <i class="fas fa-times mr-1"></i> Cancelar
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Formulario Principal -->
+            <div id="mainForm" class="feature-section">
+                <!-- Datos del Procedimiento -->
+                <div class="procedure-section fade-in">
+                    <div class="procedure-header">
+                        <h2 class="text-xl font-semibold text-gray-800">Datos del Procedimiento</h2>
+                        <select id="loadTemplate" class="procedure-select bg-green-100">
+                            <option value="">Cargar Plantilla</option>
+                        </select>
+                    </div>
+                    
+                    <div class="procedure-grid">
+                        <div class="procedure-group">
+                            <label for="procedureName" class="procedure-label">Nombre del Procedimiento <span class="text-red-500">*</span></label>
+                            <select id="procedureName" class="procedure-select">
+                                <option value="">Seleccione un procedimiento</option>
+                            </select>
+                            <input id="customProcedure" type="text" class="procedure-input mt-2 hidden" placeholder="Especifique el procedimiento">
+                            <p id="procedureNameError" class="error-message hidden">Este campo es obligatorio.</p>
+                        </div>
+                        
+                        <div class="procedure-group">
+                            <label for="procedureCode" class="procedure-label">Código del Procedimiento <span class="text-red-500">*</span></label>
+                            <input id="procedureCode" type="text" class="procedure-input" placeholder="Ej: 17.0012">
+                            <p id="procedureCodeError" class="error-message hidden">Este campo es obligatorio.</p>
+                        </div>
+                        
+                        <div class="procedure-group">
+                            <label for="startTime" class="procedure-label">Hora de Inicio <span class="text-red-500">*</span></label>
+                            <input id="startTime" type="time" class="procedure-input">
+                            <p id="startTimeError" class="error-message hidden">Este campo es obligatorio.</p>
+                        </div>
+                        
+                        <div class="procedure-group">
+                            <label for="endTime" class="procedure-label">Hora de Término <span class="text-red-500">*</span></label>
+                            <input id="endTime" type="time" class="procedure-input">
+                            <p id="endTimeError" class="error-message hidden">Este campo es obligatorio.</p>
+                        </div>
+                    </div>
+
+                    <!-- Prestaciones Adicionales -->
+                    <div id="procedure2-section" class="procedure-grid mt-4 hidden">
+                        <div class="procedure-group">
+                            <label for="procedureName2" class="procedure-label">Prestación Adicional 1</label>
+                            <select id="procedureName2" class="procedure-select">
+                                <option value="">Seleccione un procedimiento</option>
+                            </select>
+                            <input id="customProcedure2" type="text" class="procedure-input mt-2 hidden" placeholder="Especifique el procedimiento">
+                        </div>
+                        
+                        <div class="procedure-group">
+                            <label for="procedureCode2" class="procedure-label">Código de la Prestación</label>
+                            <input id="procedureCode2" type="text" class="procedure-input" placeholder="Ej: 17.0012">
+                        </div>
+                    </div>
+
+                    <div id="procedure3-section" class="procedure-grid mt-4 hidden">
+                        <div class="procedure-group">
+                            <label for="procedureName3" class="procedure-label">Prestación Adicional 2</label>
+                            <select id="procedureName3" class="procedure-select">
+                                <option value="">Seleccione un procedimiento</option>
+                            </select>
+                            <input id="customProcedure3" type="text" class="procedure-input mt-2 hidden" placeholder="Especifique el procedimiento">
+                        </div>
+                        
+                        <div class="procedure-group">
+                            <label for="procedureCode3" class="procedure-label">Código de la Prestación</label>
+                            <input id="procedureCode3" type="text" class="procedure-input" placeholder="Ej: 17.0012">
+                        </div>
+                    </div>
+
+                    <div class="mt-4">
+                        <button type="button" id="addProcedureBtn" class="btn btn-secondary">
+                            <i class="fas fa-plus mr-1"></i> Agregar otra prestación
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Pestañas de Datos -->
+                <div class="card p-5 mb-6">
+                    <div class="nav-tabs">
+                        <button class="tab-btn active" data-tab="patient-data">Paciente</button>
+                        <button class="tab-btn" data-tab="staff-data">Personal</button>
+                        <button class="tab-btn" data-tab="diagnosis-data">Diagnósticos</button>
+                        <button class="tab-btn" data-tab="procedure-data">Descripción</button>
+                        <button class="tab-btn" data-tab="indications-data">Indicaciones</button>
+                    </div>
+                    
+                    <!-- Datos del Paciente -->
+                    <div class="tab-content" id="patient-data">
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
+                            <div class="form-group">
+                                <label for="commune" class="form-label">Comuna de Procedencia <span class="text-red-500">*</span></label>
+                                <select id="commune" class="form-input capitalize">
+                                    <option value="">Seleccione una comuna</option>
+                                </select>
+                                <p id="communeError" class="error-message hidden">Este campo es obligatorio.</p>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="healthInsurance" class="form-label">Previsión de Salud <span class="text-red-500">*</span></label>
+                                <select id="healthInsurance" class="form-input">
+                                    <option value="">Seleccione previsión</option>
+                                </select>
+                                <p id="healthInsuranceError" class="error-message hidden">Este campo es obligatorio.</p>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="origin" class="form-label">Procedencia <span class="text-red-500">*</span></label>
+                                <select id="origin" class="form-input capitalize">
+                                    <option value="">Seleccione procedencia</option>
+                                </select>
+                                <p id="originError" class="error-message hidden">Este campo es obligatorio.</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Datos del Personal -->
+                    <div class="tab-content hidden" id="staff-data">
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
+                            <div class="form-group">
+                                <label class="form-label">Médico(s) Principal(es)</label>
+                                <div id="mainDoctorCheckboxes" class="checkbox-group"></div>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label class="form-label">Enfermera(s)/o(s)</label>
+                                <div id="assistantNurseCheckboxes" class="checkbox-group"></div>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label class="form-label">TENS</label>
+                                <div id="tensCheckboxes" class="checkbox-group"></div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Diagnósticos -->
+                    <div class="tab-content hidden" id="diagnosis-data">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+                            <div class="form-group">
+                                <label for="entryDiagnosis" class="form-label">Diagnóstico de Ingreso</label>
+                                <select id="entryDiagnosis" class="form-input capitalize">
+                                    <option value="">Seleccione diagnóstico</option>
+                                </select>
+                                <input id="customEntryDiagnosis" type="text" class="form-input mt-2 hidden capitalize" placeholder="Especifique el diagnóstico">
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="exitDiagnosis" class="form-label">Diagnóstico de Egreso</label>
+                                <select id="exitDiagnosis" class="form-input capitalize">
+                                    <option value="">Seleccione diagnóstico</option>
+                                </select>
+                                <input id="customExitDiagnosis" type="text" class="form-input mt-2 hidden capitalize" placeholder="Especifique el diagnóstico">
+                            </div>
+                        </div>
+                        <!-- Campo agregado: Motivo de ingreso -->
+                        <div class="form-group mt-4">
+                            <label for="admissionReason" class="form-label">Motivo de Ingreso</label>
+                            <textarea id="admissionReason" class="form-textarea" rows="3" placeholder="Describa el motivo de ingreso..."></textarea>
+                        </div>
+                    </div>
+                    
+                    <!-- Descripción del Procedimiento -->
+                    <div class="tab-content hidden" id="procedure-data">
+                        <div class="form-group">
+                            <div class="flex items-center justify-between mb-1">
+                                <label for="procedureDescription" class="form-label mb-0">Descripción detallada del procedimiento</label>
+                                <button type="button" id="useDescSuggestionBtn" class="btn bg-blue-50 text-blue-600 hover:bg-blue-100 text-xs px-2 py-1 rounded flex items-center gap-1 transition-colors">
+                                    <i class="fas fa-magic"></i> Usar descripción predeterminada
+                                </button>
+                            </div>
+                            <textarea id="procedureDescription" class="form-textarea" rows="6" placeholder="Describa el procedimiento realizado..."></textarea>
+                        </div>
+                        
+                        <!-- Mediciones -->
+                        <div class="form-group">
+                            <label class="flex items-center gap-3 p-3 bg-blue-50 rounded-lg hover:bg-blue-100 transition-colors cursor-pointer">
+                                <input type="checkbox" id="addMeasurements" class="rounded w-5 h-5 text-blue-600 focus:ring-blue-500">
+                                <span class="form-label mb-0 text-lg font-medium text-gray-700">Incluir mediciones</span>
+                            </label>
+                        </div>
+                        
+                        <div id="measurementsContainer" class="hidden mt-6">
+                            <div class="bg-gradient-to-r from-blue-50 to-white p-6 rounded-xl border border-blue-100 mb-6">
+                                <h4 class="font-semibold text-xl text-gray-800 mb-2">Mediciones</h4>
+                                <p class="text-gray-600 text-sm mb-4">Agregue y configure las mediciones necesarias para el procedimiento</p>
+                            </div>
+                            <div id="measurementsList" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+                                <!-- Las mediciones se renderizan aquí dinámicamente -->
+                            </div>
+                            <div class="flex gap-4 mt-6 justify-end">
+                                <button type="button" id="addCustomMeasurement" class="btn bg-green-600 text-white hover:bg-green-700">
+                                    <i class="fas fa-plus mr-1"></i> Agregar medición
+                                </button>
+                                <button type="button" id="addParameterToMeasurement" class="btn bg-blue-600 text-white hover:bg-blue-700">
+                                    <i class="fas fa-plus-circle mr-1"></i> Agregar parámetro
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Indicaciones -->
+                    <div class="tab-content hidden" id="indications-data">
+                        <div class="form-group">
+                            <label class="form-label">Indicaciones post-procedimiento</label>
+                            <div id="indicationsCheckboxes" class="space-y-2">
+                                <!-- Indicaciones se cargan dinámicamente -->
+                            </div>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="additionalIndications" class="form-label">Indicaciones adicionales</label>
+                            <textarea id="additionalIndications" class="form-textarea" rows="3" placeholder="Indicaciones específicas adicionales..."></textarea>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Botones de acción -->
+                <div class="flex flex-wrap justify-end gap-3">
+                    <button type="button" id="clearFormBtn" class="btn bg-gray-300 text-gray-800 hover:bg-gray-400">
+                        <i class="fas fa-trash mr-1"></i> Limpiar
+                    </button>
+                    <button type="button" id="previewReportBtn" class="btn bg-indigo-600 text-white hover:bg-indigo-700">
+                        <i class="fas fa-eye mr-1"></i> Vista Previa
+                    </button>
+                </div>
+            </div>
+
+            <!-- Reporte Generado -->
+            <div id="generatedReport" class="card hidden" style="padding:1.5rem;">
+
+                <div class="no-print report-toolbar flex justify-end items-center mb-4 gap-2" data-html2canvas-ignore="true">
+                    <button id="copyFormattedReportBtn" class="btn text-white shadow-lg" style="background: linear-gradient(135deg, #f59e0b, #ea580c);">
+                        <i class="fas fa-paint-brush mr-1"></i> Copiar Informe
+                    </button>
+                </div>
+                <header id="reportHeader" class="text-center"></header>
+                <div id="reportContent" style="margin-top:0;"></div>
+            </div>
+        </main>
+    </div>
+    
+    <!-- Modal Wizard - Asistente Paso a Paso -->
+    <div id="wizardModal" class="modal hidden">
+        <div class="modal-content wizard-modal-content">
+            <div class="wizard-header">
+                <h2 class="wizard-title"><i class="fas fa-wand-magic-sparkles mr-2"></i> Asistente Paso a Paso</h2>
+                <button type="button" class="modal-close-btn" onclick="closeWizardModal()">&times;</button>
+            </div>
+            
+            <!-- Barra de Progreso -->
+            <div class="wizard-progress-container">
+                <div class="wizard-progress-bar" id="wizardProgressBar">
+                    <div class="wizard-progress-fill" id="wizardProgressFill"></div>
+                </div>
+                <div class="wizard-steps-indicator" id="wizardStepsIndicator">
+                    <div class="wizard-step-dot active" data-step="1"><span>1</span><small>Procedimiento</small></div>
+                    <div class="wizard-step-dot" data-step="2"><span>2</span><small>Prestaciones</small></div>
+                    <div class="wizard-step-dot" data-step="3"><span>3</span><small>Paciente</small></div>
+                    <div class="wizard-step-dot" data-step="4"><span>4</span><small>Personal</small></div>
+                    <div class="wizard-step-dot" data-step="5"><span>5</span><small>Diagnósticos</small></div>
+                    <div class="wizard-step-dot" data-step="6"><span>6</span><small>Descripción</small></div>
+                    <div class="wizard-step-dot" data-step="7"><span>7</span><small>Mediciones</small></div>
+                    <div class="wizard-step-dot" data-step="8"><span>8</span><small>Indicaciones</small></div>
+                </div>
+            </div>
+            
+            <!-- Contenido del paso -->
+            <div class="wizard-body" id="wizardBody">
+                <!-- Los pasos se renderizan dinámicamente -->
+            </div>
+            
+            <!-- Botones de navegación -->
+            <div class="wizard-footer">
+                <button type="button" id="wizardPrevBtn" class="btn btn-secondary" onclick="prevWizardStep()">
+                    <i class="fas fa-arrow-left mr-1"></i> Anterior
+                </button>
+                <span class="wizard-step-counter" id="wizardStepCounter">Paso 1 de 8</span>
+                <button type="button" id="wizardNextBtn" class="btn btn-primary" onclick="nextWizardStep()">
+                    Siguiente <i class="fas fa-arrow-right ml-1"></i>
+                </button>
+                <button type="button" id="wizardFinishBtn" class="btn btn-success hidden" onclick="finishWizard()">
+                    <i class="fas fa-check mr-1"></i> Finalizar y Generar
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Script JavaScript -->
+    <script src="script_organized.js"></script>
+</body>
+</html>

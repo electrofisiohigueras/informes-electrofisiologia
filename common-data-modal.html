@@ -1,0 +1,46 @@
+<!-- Modal de Datos Comunes -->
+<div id="commonDataModal" class="modal hidden">
+    <div class="modal-content w-full max-w-3xl">
+        <div class="modal-header">
+            <h2 class="text-xl font-bold">Editar Datos Comunes</h2>
+            <button type="button" class="modal-close-btn">&times;</button>
+        </div>
+        <div class="modal-body">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <!-- Diagnósticos de Egreso -->
+                <div class="form-group">
+                    <label class="form-label">Diagnósticos de Egreso</label>
+                    <div class="flex flex-col gap-2">
+                        <div class="flex gap-2">
+                            <input type="text" id="newExitDiagnosis" class="form-input flex-grow" placeholder="Nuevo diagnóstico de egreso">
+                            <button type="button" id="addExitDiagnosisBtn" class="btn bg-blue-600 text-white">
+                                <i class="fas fa-plus"></i>
+                            </button>
+                        </div>
+                        <ul id="exitDiagnosesList" class="list-none p-0 max-h-60 overflow-y-auto">
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Indicaciones -->
+                <div class="form-group">
+                    <label class="form-label">Indicaciones Post-procedimiento</label>
+                    <div class="flex flex-col gap-2">
+                        <div class="flex gap-2">
+                            <input type="text" id="commonDataNewIndication" class="form-input flex-grow" placeholder="Nueva indicación post-procedimiento">
+                            <button type="button" id="commonDataAddIndicationBtn" class="btn bg-blue-600 text-white">
+                                <i class="fas fa-plus"></i>
+                            </button>
+                        </div>
+                        <ul id="commonDataIndicationsList" class="list-none p-0 max-h-60 overflow-y-auto">
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button type="button" class="btn bg-gray-500 text-white hover:bg-gray-600" onclick="closeCommonDataModal()">Cerrar</button>
+            <button type="button" class="btn bg-blue-600 text-white hover:bg-blue-700" onclick="saveCommonData()">Guardar</button>
+        </div>
+    </div>
+</div>

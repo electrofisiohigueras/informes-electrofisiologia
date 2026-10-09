@@ -1,0 +1,580 @@
+/* ============================================================= */
+/* report-styles.css - ESTILOS DEL INFORME (VERSIÓN UNIFICADA)   */
+/* ============================================================= */
+/* CSS limpiado: se fusionaron los bloques base + PASE 2/3/4.    */
+/* El resultado visual es idéntico; solo se eliminaron reglas    */
+/* duplicadas, gradientes que nunca se veían y estilos muertos.  */
+/* ============================================================= */
+
+/* ------------------------------------------------------------- */
+/* CONTENEDOR BASE                                                */
+/* ------------------------------------------------------------- */
+.report-container {
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+    overflow: hidden;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    line-height: 1.6;
+    font-size: 12px;
+    color: #1a1a1a;
+    background-color: #fff;
+}
+
+#reportContent {
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    font-size: 12px;
+}
+
+:root {
+    --report-accent: #1E4D8C;
+    --report-accent-soft: rgba(30, 77, 140, 0.08);
+    --report-body-size: 12.5px;
+    --report-body-size-small: 12.5px;
+    --report-title-main: 30px;
+    --report-title-section: 17px;
+    --report-title-subsection: 14px;
+    --report-text: 12.5px;
+    --report-text-small: 12.5px;
+    --report-table-header: 11px;
+    --report-table-body: 12.5px;
+    --report-line: #dfe7f1;
+    --report-line-strong: #1E4D8C;
+    --report-text-color: #1f2937;
+    --report-muted-color: #475569;
+    --report-soft-bg: #f3f6fb;
+}
+
+/* ------------------------------------------------------------- */
+/* TABLAS FORMALES DEL INFORME                                    */
+/* ------------------------------------------------------------- */
+.report-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 0.5rem 0 1rem 0;
+    page-break-inside: avoid;
+    table-layout: auto;
+}
+
+.report-table tr {
+    page-break-inside: avoid;
+    page-break-after: auto;
+}
+
+.report-table th, .report-table td {
+    border: 1px solid #dfe7f1;
+    padding: 0.42rem 0.7rem;
+    text-align: left;
+    word-break: break-word;
+    overflow-wrap: break-word;
+    vertical-align: middle;
+}
+
+.report-table th {
+    background-color: var(--report-soft-bg);
+    color: #475569;
+    font-weight: 700;
+    font-size: var(--report-table-header) !important;
+    letter-spacing: 0;
+    text-transform: none;
+}
+
+.report-table td {
+    font-size: var(--report-table-body) !important;
+    color: var(--report-text-color);
+    line-height: 1.5;
+}
+
+.report-data-header-row th {
+    font-size: var(--report-table-header) !important;
+    color: #334155;
+}
+
+.report-table tbody tr:nth-child(even) {
+    background-color: #f8fafc;
+}
+
+.report-table tbody tr:nth-child(odd) {
+    background-color: #fff;
+}
+
+.report-table tbody tr:hover {
+    background-color: #f2f7ff;
+}
+
+/* Filas de cabecera de datos dentro de tbody (estilo tabular) */
+.report-data-header-row th {
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    word-break: break-word;
+    overflow-wrap: break-word;
+}
+
+/* Celdas de datos con texto largo */
+.report-data-table td[colspan] {
+    word-break: break-word;
+    overflow-wrap: break-word;
+}
+
+/* ------------------------------------------------------------- */
+/* TABLAS DE LAYOUT - PARA COLUMNAS LADO A LADO                   */
+/* ------------------------------------------------------------- */
+.layout-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 0;
+    padding: 0;
+    page-break-inside: avoid;
+    table-layout: auto;
+}
+
+.layout-table tbody {
+    width: 100%;
+}
+
+.layout-table tr {
+    page-break-inside: avoid;
+    width: 100%;
+}
+
+.layout-table td {
+    vertical-align: top;
+    padding: 0.35rem 0.6rem 0.35rem 0;
+    border: none;
+    box-sizing: border-box;
+    word-break: break-word;
+    overflow-wrap: break-word;
+    font-size: 12.5px;
+}
+
+.layout-table td:last-child {
+    padding-right: 0;
+}
+
+/* Anchos de columna explícitos (no colapsarse al pegar) */
+.layout-table td[style*="width:50%"] {
+    width: 50% !important;
+    max-width: 50%;
+}
+
+.layout-table td[style*="width:33%"],
+.layout-table td[style*="width:34%"] {
+    width: 33.33% !important;
+    max-width: 33.33%;
+}
+
+.layout-table td[style*="width:35%"] {
+    width: 35% !important;
+    max-width: 35%;
+}
+
+.layout-table td[style*="width:65%"] {
+    width: 65% !important;
+    max-width: 65%;
+}
+
+/* ------------------------------------------------------------- */
+/* RECUADROS (REPORT-BOX) Y TÍTULOS DE SECCIÓN                    */
+/* ------------------------------------------------------------- */
+.report-box {
+    border: 1.5px solid #cbd5e1;
+    padding: 0.8rem 0.9rem 0.7rem;
+    margin-bottom: 0;
+    page-break-inside: avoid;
+    background-color: #ffffff;
+    color: var(--report-text-color);
+    box-sizing: border-box;
+    width: 100%;
+    border-radius: 0;
+    box-shadow: none;
+    position: relative;
+}
+
+.report-box + .report-box {
+    margin-top: 1.9rem;
+}
+
+.report-box-title {
+    display: block;
+    font-weight: 700;
+    color: var(--report-accent);
+    font-size: var(--report-title-section) !important;
+    background-color: transparent;
+    padding: 0 0 0.5rem 0;
+    border-bottom: 2px solid var(--report-accent);
+    margin: 0 0 0.9rem 0;
+    text-transform: none;
+    letter-spacing: 0;
+    border-radius: 0;
+    line-height: 1.35;
+}
+
+.report-box[data-kind="procedure"] .report-box-title,
+.report-box[data-kind="diagnostics"] .report-box-title,
+.report-box[data-kind="description"] .report-box-title,
+.report-box[data-kind="additional"] .report-box-title,
+.report-box[data-kind="measurements"] .report-box-title,
+.report-box[data-kind="staff"] .report-box-title,
+.report-box[data-kind="indications"] .report-box-title {
+    color: var(--report-accent);
+    border-bottom: 2px solid var(--report-accent);
+    background-color: transparent;
+    font-size: var(--report-title-section) !important;
+    font-weight: 700;
+    margin-top: 0;
+}
+
+.report-box > .report-box-title + table,
+.report-box > .report-box-title + .report-subsection,
+.report-box > .report-box-title + p,
+.report-box > table + table,
+.report-box > table + .report-subsection,
+.report-box > .report-subsection + table,
+.report-box > .report-subsection + .report-subsection,
+.report-box > p + table,
+.report-box > p + p,
+.report-box > ul + p,
+.report-box > ul + ul {
+    border-top: 1px solid var(--report-line);
+    margin-top: 0.7rem;
+    padding-top: 0.7rem;
+}
+
+.report-box > table,
+.report-box > .report-subsection,
+.report-box > p,
+.report-box > ul {
+    display: block;
+}
+
+.report-box[data-kind="procedure"],
+.report-box[data-kind="diagnostics"],
+.report-box[data-kind="description"],
+.report-box[data-kind="additional"],
+.report-box[data-kind="measurements"],
+.report-box[data-kind="staff"],
+.report-box[data-kind="indications"] {
+    border: 1.5px solid #cbd5e1;
+    border-left: 4px solid var(--report-accent);
+    background-color: #f8fafc;
+    box-shadow: inset 0 0 0 1px rgba(30, 77, 140, 0.04);
+}
+
+.report-box[data-kind="procedure"] .report-table th,
+.report-box[data-kind="diagnostics"] .report-table th,
+.report-box[data-kind="description"] .report-table th,
+.report-box[data-kind="additional"] .report-table th,
+.report-box[data-kind="measurements"] .report-table th,
+.report-box[data-kind="staff"] .report-table th,
+.report-box[data-kind="indications"] .report-table th {
+    background-color: var(--report-soft-bg);
+    color: #1f2937;
+}
+
+.report-box[data-kind="procedure"] .report-table td,
+.report-box[data-kind="diagnostics"] .report-table td,
+.report-box[data-kind="description"] .report-table td,
+.report-box[data-kind="additional"] .report-table td,
+.report-box[data-kind="measurements"] .report-table td,
+.report-box[data-kind="staff"] .report-table td,
+.report-box[data-kind="indications"] .report-table td {
+    color: var(--report-text-color);
+}
+
+#reportContent .report-box[data-kind="procedure"] .report-table,
+#reportContent .report-box[data-kind="procedure"] .report-table th,
+#reportContent .report-box[data-kind="procedure"] .report-table td,
+#reportContent .report-box[data-kind="procedure"] .report-item,
+#reportContent .report-box[data-kind="procedure"] .report-label-cell {
+    font-size: 14px !important;
+    line-height: 1.6 !important;
+}
+
+/* ------------------------------------------------------------- */
+/* TÍTULO PRINCIPAL DEL PROCEDIMIENTO                             */
+/* ------------------------------------------------------------- */
+.report-main-title {
+    text-align: center;
+    font-size: var(--report-title-main) !important;
+    font-weight: 800;
+    color: #ffffff;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    background-color: var(--report-accent);
+    padding: 1rem 1.2rem;
+    margin: 0 0 1.5rem 0;
+    border-bottom: none;
+    border-radius: 0;
+    width: 100%;
+    box-sizing: border-box;
+    text-shadow: none;
+    line-height: 1.2;
+}
+
+/* ------------------------------------------------------------- */
+/* TEXTO DEL INFORME                                              */
+/* ------------------------------------------------------------- */
+.report-item {
+    margin: 0.2rem 0;
+    font-size: var(--report-text) !important;
+    line-height: 1.5;
+    color: var(--report-text-color);
+    word-break: break-word;
+    overflow-wrap: break-word;
+}
+
+.report-item strong {
+    color: var(--report-accent);
+    font-weight: 700;
+    display: inline-block;
+    min-width: 120px;
+}
+
+.report-box[data-kind="diagnostics"] .report-item,
+.report-box[data-kind="staff"] .report-item,
+.report-box[data-kind="diagnostics"] .report-table td,
+.report-box[data-kind="staff"] .report-table td {
+    font-size: var(--report-text);
+    line-height: 1.5;
+}
+
+/* Lista de indicaciones */
+.report-indications-list {
+    margin: 0.5rem 0 0.5rem 1.5rem;
+    padding: 0;
+}
+
+.report-indications-list li {
+    margin-bottom: 0.35rem;
+    line-height: 1.5;
+    font-size: var(--report-text);
+    color: var(--report-text-color);
+}
+
+.report-indications-list li::marker {
+    color: var(--report-accent);
+}
+
+/* Celda etiqueta en la tabla de personal */
+.report-label-cell {
+    background-color: #f3f6fb;
+    font-weight: 700;
+    white-space: nowrap;
+    font-size: var(--report-table-body);
+    color: var(--report-text-color);
+}
+
+/* Fila de título de medición (banda discreta) */
+.report-measurement-title-row td {
+    background-color: #eef4ff;
+    color: var(--report-accent);
+    font-weight: 700;
+    font-size: 13px;
+    text-transform: none;
+    letter-spacing: 0;
+}
+
+/* Subsección dentro de una caja (Motivo de Ingreso) */
+.report-subsection {
+    margin-top: 0.85rem;
+    padding-top: 0.7rem;
+    border-top: 1px solid var(--report-line);
+    position: relative;
+}
+
+.report-subsection::before {
+    content: "";
+    display: block;
+    width: 100%;
+    height: 1px;
+    background: linear-gradient(to right, rgba(30, 77, 140, 0.7), rgba(30, 77, 140, 0.15), transparent);
+    margin-bottom: 0.45rem;
+}
+
+.report-subsection-title {
+    display: inline-block;
+    font-weight: 700;
+    color: #334155;
+    background-color: #f3f6fb;
+    border-left: 3px solid var(--report-accent);
+    padding: 0.3rem 0.55rem;
+    font-size: var(--report-title-subsection) !important;
+    line-height: 1.4;
+    letter-spacing: 0;
+    margin-bottom: 0.35rem;
+    text-transform: none;
+}
+
+.report-box[data-kind="diagnostics"] .report-subsection,
+.report-box[data-kind="staff"] .report-subsection {
+    border-top: 1px solid var(--report-line);
+    padding-top: 0.7rem;
+}
+
+/* ------------------------------------------------------------- */
+/* ESTABILIDAD PARA CAPTURA / PDF                                 */
+/* ------------------------------------------------------------- */
+.html2pdf-container {
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.report-box, .layout-table, .report-table {
+    break-inside: avoid;
+    -webkit-break-inside: avoid;
+    -moz-break-inside: avoid;
+}
+
+div, p, table, tr, td {
+    box-sizing: border-box;
+    max-width: 100%;
+}
+
+/* ------------------------------------------------------------- */
+/* IMPRESIÓN / PDF - UNIFICADO                                    */
+/* ------------------------------------------------------------- */
+@media print {
+    @page {
+        size: letter portrait;
+        margin: 10mm 10mm 10mm 10mm;
+    }
+
+    * {
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+        color-adjust: exact;
+    }
+
+    body {
+        margin: 0;
+        padding: 0;
+        width: 100%;
+    }
+
+    body > * {
+        display: none !important;
+    }
+
+    body > div > main #generatedReport {
+        display: block !important;
+    }
+
+    #generatedReport {
+        display: block !important;
+        box-shadow: none !important;
+        border: none !important;
+        padding: 0 !important;
+        margin: 0 !important;
+        width: 100%;
+    }
+
+    .no-print {
+        display: none !important;
+    }
+
+    #reportContent {
+        width: 100%;
+        margin: 0;
+        padding: 0;
+    }
+
+    .report-container {
+        font-size: 10pt;
+        line-height: 1.5;
+        color: #000;
+        width: 100%;
+        margin: 0;
+        padding: 0;
+    }
+
+    .report-box {
+        page-break-inside: avoid;
+        border: 1px solid #cbd5e1;
+        margin-bottom: 0.8rem;
+    }
+
+    .layout-table,
+    .report-table {
+        page-break-inside: avoid;
+        width: 100%;
+    }
+
+    .layout-table td {
+        page-break-inside: avoid;
+        word-break: break-word;
+    }
+
+    .report-table {
+        page-break-inside: auto;
+    }
+
+    .report-table tr {
+        page-break-inside: avoid;
+        page-break-after: auto;
+    }
+
+    .report-table th {
+        background-color: var(--report-soft-bg);
+        color: #1f2937;
+    }
+
+    .report-table tbody tr:nth-child(even) {
+        background-color: #f8fafc;
+    }
+
+    .report-item {
+        font-size: 12.5pt;
+        margin: 0.2rem 0;
+    }
+
+    .report-main-title {
+        background-color: var(--report-accent);
+        color: #ffffff;
+        border-bottom: none;
+        text-shadow: none;
+        page-break-inside: avoid;
+    }
+
+    .report-box[data-kind="procedure"] .report-box-title,
+    .report-box[data-kind="diagnostics"] .report-box-title,
+    .report-box[data-kind="description"] .report-box-title,
+    .report-box[data-kind="additional"] .report-box-title,
+    .report-box[data-kind="measurements"] .report-box-title,
+    .report-box[data-kind="staff"] .report-box-title,
+    .report-box[data-kind="indications"] .report-box-title {
+        background-color: transparent;
+        color: var(--report-accent);
+        border-bottom: 2px solid var(--report-accent);
+    }
+
+    .report-box[data-kind="procedure"] .report-table th,
+    .report-box[data-kind="diagnostics"] .report-table th,
+    .report-box[data-kind="description"] .report-table th,
+    .report-box[data-kind="additional"] .report-table th,
+    .report-box[data-kind="measurements"] .report-table th,
+    .report-box[data-kind="staff"] .report-table th,
+    .report-box[data-kind="indications"] .report-table th {
+        background-color: var(--report-soft-bg);
+        color: #1f2937;
+    }
+
+    .report-measurement-title-row td {
+        background-color: #eef4ff;
+        color: var(--report-accent);
+    }
+    .report-label-cell { background-color: #f1f5f9; }
+
+    /* Jerarquía tipográfica en impresión (equivalente a pantalla) */
+    .report-data-table th,
+    .report-data-table td {
+        padding: 0.35rem 0.5rem;
+    }
+
+    .report-data-header-row th { font-size: 11pt; }
+    .report-data-table td { font-size: 12.5pt; }
+    .report-measurement-title-row td { font-size: 13pt; }
+}
