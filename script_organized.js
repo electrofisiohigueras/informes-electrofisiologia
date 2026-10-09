@@ -413,7 +413,7 @@ function attachAddNewOption(select, placeholder, onAdd, direct) {
 function addToCommonArray(arr, value, label) {
     if (!Array.isArray(arr)) return false;
     if (arr.includes(value)) {
-        alert(`${label} ya existe.`);
+        showNotification(`${label} ya existe.`, 'warning');
         return false;
     }
     arr.push(value);
@@ -444,7 +444,7 @@ function openAddProcedureModal(select, onSaved) {
         const name = modal.querySelector('#modal-newProcName').value.trim();
         const code = modal.querySelector('#modal-newProcCode').value.trim();
         if (!name || !code) {
-            alert('Por favor, complete los campos obligatorios (Nombre y Código)');
+            showNotification('Por favor, complete los campos obligatorios (Nombre y Código)', 'error');
             return;
         }
         const desc = modal.querySelector('#modal-newProcDesc').value.trim();
@@ -528,14 +528,14 @@ function addNewMeasurementOption(param, measurement, value, overrideValues) {
             ? overrideValues['Marca']
             : (brandParam ? brandParam.value : '');
         if (!deviceType || !deviceBrand) {
-            alert('Primero seleccione tipo y marca.');
+            showNotification('Primero seleccione tipo y marca.', 'warning');
             return false;
         }
         if (!appState.commonData.deviceModelsByTypeAndBrand[deviceType]) appState.commonData.deviceModelsByTypeAndBrand[deviceType] = {};
         if (!appState.commonData.deviceModelsByTypeAndBrand[deviceType][deviceBrand]) appState.commonData.deviceModelsByTypeAndBrand[deviceType][deviceBrand] = [];
         const models = appState.commonData.deviceModelsByTypeAndBrand[deviceType][deviceBrand];
         if (models.includes(value)) {
-            alert('El modelo ya existe para esta combinación.');
+            showNotification('El modelo ya existe para esta combinación.', 'warning');
             return false;
         }
         models.push(value);
@@ -550,7 +550,7 @@ function addNewMeasurementOption(param, measurement, value, overrideValues) {
     // Parámetro genérico con options
     if (!Array.isArray(param.options)) param.options = [];
     if (param.options.includes(value)) {
-        alert('La opción ya existe.');
+        showNotification('La opción ya existe.', 'warning');
         return false;
     }
     param.options.push(value);
@@ -807,7 +807,7 @@ function updateProcedureDropdown() {
     });
 }
 
-function updateProcedureCode(selectElement, codeInput) {
+async function updateProcedureCode(selectElement, codeInput) {
     if (selectElement.value && selectElement.value !== 'other') {
         const selectedProcedure = appState.procedures.find(p => p.id === selectElement.value);
         if (selectedProcedure && codeInput) {
@@ -822,7 +822,11 @@ function updateProcedureCode(selectElement, codeInput) {
                 descEl.dispatchEvent(new Event('change'));
             } else {
                 // Si ya tiene texto, preguntar si reemplazar por la descripción predefinida
-                const shouldReplace = confirm('Se ha seleccionado un procedimiento con descripción predefinida. ¿Desea reemplazar la descripción actual por la predefinida?');
+                const shouldReplace = await showConfirmDialog(
+                    'Reemplazar descripción',
+                    'Se ha seleccionado un procedimiento con descripción predefinida. ¿Desea reemplazar la descripción actual por la predefinida?',
+                    { confirmText: 'Reemplazar', cancelText: 'Mantener actual', danger: false }
+                );
                 if (shouldReplace) {
                     descEl.value = selectedProcedure.description;
                     descEl.dispatchEvent(new Event('change'));
@@ -910,8 +914,13 @@ function updateCommonDataLists() {
     });
 }
 
-function newReport() {
-    if (confirm('¿Está seguro de que desea crear un nuevo reporte? Se perderán los datos no guardados.')) {
+async function newReport() {
+    const ok = await showConfirmDialog(
+        'Nuevo informe',
+        '¿Desea crear un nuevo informe? Se perderán los datos no guardados.',
+        { confirmText: 'Crear nuevo' }
+    );
+    if (ok) {
         clearForm();
         showMainForm();
     }
@@ -959,7 +968,7 @@ function saveProcedure() {
     const description = document.getElementById('newProcedureDescription')?.value?.trim();
 
     if (!name || !code) {
-        alert('Por favor, complete los campos obligatorios (Nombre y Código)');
+        showNotification('Por favor, complete los campos obligatorios (Nombre y Código)', 'error');
         return;
     }
 
@@ -987,10 +996,10 @@ function saveProcedure() {
         renderProcedures();
         updateProcedureDropdown();
         clearProcedureForm();
-        alert('Procedimiento guardado correctamente');
+        showNotification('Procedimiento guardado correctamente', 'success');
     } catch (error) {
         console.error('Error saving procedure:', error);
-        alert('Error al guardar el procedimiento');
+        showNotification('Error al guardar el procedimiento', 'error');
     }
 }
 
@@ -1006,18 +1015,22 @@ function editProcedure(procedureId) {
     if (elements.cancelEditProcedureBtn) elements.cancelEditProcedureBtn.classList.remove('hidden');
 }
 
-function deleteProcedure(procedureId) {
-    if (confirm('¿Está seguro de que desea eliminar este procedimiento?')) {
-        try {
-            appState.procedures = appState.procedures.filter(p => p.id !== procedureId);
-            saveAllData();
-            renderProcedures();
-            updateProcedureDropdown();
-            alert('Procedimiento eliminado correctamente');
-        } catch (error) {
-            console.error('Error deleting procedure:', error);
-            alert('Error al eliminar el procedimiento');
-        }
+async function deleteProcedure(procedureId) {
+    const ok = await showConfirmDialog(
+        'Eliminar procedimiento',
+        '¿Está seguro de que desea eliminar este procedimiento?',
+        { confirmText: 'Eliminar' }
+    );
+    if (!ok) return;
+    try {
+        appState.procedures = appState.procedures.filter(p => p.id !== procedureId);
+        saveAllData();
+        renderProcedures();
+        updateProcedureDropdown();
+        showNotification('Procedimiento eliminado correctamente', 'success');
+    } catch (error) {
+        console.error('Error deleting procedure:', error);
+        showNotification('Error al eliminar el procedimiento', 'error');
     }
 }
 
@@ -1556,10 +1569,10 @@ function exportData() {
         link.href = URL.createObjectURL(dataBlob);
         link.download = `medical-report-data-${new Date().toISOString().split('T')[0]}.json`;
         link.click();
-        alert('Datos exportados correctamente');
+        showNotification('Datos exportados correctamente', 'success');
     } catch (error) {
         console.error('Error exporting data:', error);
-        alert('Error al exportar los datos');
+        showNotification('Error al exportar los datos', 'error');
     }
 }
 
@@ -1567,10 +1580,15 @@ function importData(event) {
     const file = event.target.files[0];
     if (!file) return;
     const reader = new FileReader();
-    reader.onload = function(e) {
+    reader.onload = async function(e) {
         try {
             const importedData = JSON.parse(e.target.result);
-            if (confirm('¿Está seguro de que desea importar estos datos? Esto sobrescribirá los datos actuales.')) {
+            const ok = await showConfirmDialog(
+                'Importar datos',
+                '¿Está seguro de que desea importar estos datos? Esto sobrescribirá los datos actuales.',
+                { confirmText: 'Importar' }
+            );
+            if (ok) {
                 if (importedData.procedures) appState.procedures = importedData.procedures;
                 if (importedData.templates) appState.templates = importedData.templates;
                 if (importedData.staff) appState.staff = importedData.staff;
@@ -1582,11 +1600,11 @@ function importData(event) {
                 updateProcedureDropdown();
                 updateTemplatesDropdown();
                 renderStaffCheckboxes();
-                alert('Datos importados correctamente');
+                showNotification('Datos importados correctamente', 'success');
             }
         } catch (error) {
             console.error('Error importing data:', error);
-            alert('Error al importar los datos. Verifique que el archivo sea válido.');
+            showNotification('Error al importar los datos. Verifique que el archivo sea válido.', 'error');
         }
     };
     reader.readAsText(file);
@@ -1606,7 +1624,7 @@ function importData(event) {
 async function copyFormattedReport() {
     const reportContent = elements.reportContent;
     if (!reportContent) {
-        alert('No hay contenido en el informe para copiar.');
+        showNotification('No hay contenido en el informe para copiar.', 'error');
         return;
     }
 
@@ -1666,7 +1684,7 @@ async function copyFormattedReport() {
 
     } catch (error) {
         console.error('Error al copiar el informe:', error);
-        alert('Ocurrió un error al copiar el informe. Intente seleccionar el texto manualmente.');
+        showNotification('Ocurrió un error al copiar el informe. Intente seleccionar el texto manualmente.', 'error');
     }
 }
 
@@ -1974,7 +1992,7 @@ function fallbackCopyHtml(htmlContent) {
 function showCopyFeedback(message, btnEl) {
     const btn = btnEl || elements.copyFormattedReportBtn;
     if (!btn) {
-        alert(message);
+        showNotification(message, 'info');
         return;
     }
     const originalHtml = btn.innerHTML;
@@ -1997,7 +2015,7 @@ function showCopyFeedback(message, btnEl) {
 function inspectReportHtml() {
     const reportContent = elements.reportContent;
     if (!reportContent) {
-        alert('No hay informe generado.');
+        showNotification('No hay informe generado.', 'error');
         return null;
     }
 
@@ -2153,14 +2171,18 @@ function addCommonDataItem(dataType, inputId, listId, deleteClass) {
     showNotification(`Se agregó "${newValue}" correctamente`, 'success');
 }
 
-function deleteCommonDataItem(dataType, value, listId, deleteClass) {
-    if (confirm(`¿Está seguro de que desea eliminar "${value}"?`)) {
-        appState.commonData[dataType] = appState.commonData[dataType].filter(item => item !== value);
-        saveAllData();
-        updateCommonDataDropdowns();
-        updateCommonDataList(dataType, listId, deleteClass);
-        showNotification(`Se eliminó "${value}" correctamente`, 'success');
-    }
+async function deleteCommonDataItem(dataType, value, listId, deleteClass) {
+    const ok = await showConfirmDialog(
+        'Eliminar elemento',
+        `¿Está seguro de que desea eliminar "${value}"?`,
+        { confirmText: 'Eliminar' }
+    );
+    if (!ok) return;
+    appState.commonData[dataType] = appState.commonData[dataType].filter(item => item !== value);
+    saveAllData();
+    updateCommonDataDropdowns();
+    updateCommonDataList(dataType, listId, deleteClass);
+    showNotification(`Se eliminó "${value}" correctamente`, 'success');
 }
 
 function updateCommonDataList(dataType, listId, deleteClass) {
@@ -2182,11 +2204,24 @@ function updateCommonDataList(dataType, listId, deleteClass) {
 }
 
 function showNotification(message, type = 'success') {
+    const colorByType = {
+        success: 'bg-green-500',
+        error: 'bg-red-500',
+        warning: 'bg-yellow-500',
+        info: 'bg-blue-500'
+    };
+    const iconByType = {
+        success: 'fa-check-circle',
+        error: 'fa-exclamation-circle',
+        warning: 'fa-exclamation-triangle',
+        info: 'fa-info-circle'
+    };
     const notification = document.createElement('div');
-    notification.className = `fixed top-4 right-4 p-4 rounded shadow-lg ${
-        type === 'success' ? 'bg-green-500' : 'bg-red-500'
-    } text-white z-50`;
-    notification.textContent = message;
+    notification.className = `fixed top-4 right-4 p-4 rounded shadow-lg flex items-center gap-2 ${
+        colorByType[type] || colorByType.success
+    } text-white`;
+    notification.style.zIndex = '4000';
+    notification.innerHTML = `<i class="fas ${iconByType[type] || iconByType.success}"></i><span>${escapeHtml(message)}</span>`;
     document.body.appendChild(notification);
 
     // Animación de entrada
@@ -2206,6 +2241,108 @@ function showNotification(message, type = 'success') {
         setTimeout(() => notification.remove(), 300);
     }, 3000);
 }
+
+/**
+ * Modal de confirmación reutilizable basado en Promise.
+ * Resuelve true si el usuario confirma y false si cancela
+ * (botón Cancelar, clic fuera del modal o tecla Escape).
+ */
+function showConfirmDialog(title, message, options = {}) {
+    return new Promise((resolve) => {
+        const confirmText = options.confirmText || 'Confirmar';
+        const cancelText = options.cancelText || 'Cancelar';
+        const danger = options.danger !== false; // por defecto, acción destructiva
+
+        const overlay = document.createElement('div');
+        overlay.className = 'app-dialog-overlay';
+        overlay.style.cssText = 'position:fixed;inset:0;z-index:3000;display:flex;align-items:center;justify-content:center;padding:1rem;background:rgba(15, 23, 42, 0.5);';
+
+        const modal = document.createElement('div');
+        modal.className = 'modal-content';
+        modal.style.maxWidth = '26rem';
+        modal.innerHTML = `
+            <div class="modal-header">
+                <h2>${escapeHtml(title)}</h2>
+            </div>
+            <div class="modal-body">
+                <p style="margin:0;color:#334155;">${escapeHtml(message)}</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-role="cancel">${escapeHtml(cancelText)}</button>
+                <button type="button" class="btn ${danger ? 'btn-error' : 'btn-primary'}" data-role="confirm">${escapeHtml(confirmText)}</button>
+            </div>
+        `;
+
+        overlay.appendChild(modal);
+        document.body.appendChild(overlay);
+
+        const close = (result) => {
+            document.removeEventListener('keydown', handleKey);
+            overlay.remove();
+            resolve(result);
+        };
+        const handleKey = (e) => {
+            if (e.key === 'Escape') close(false);
+        };
+
+        modal.querySelector('[data-role="cancel"]').addEventListener('click', () => close(false));
+        modal.querySelector('[data-role="confirm"]').addEventListener('click', () => close(true));
+        overlay.addEventListener('click', (e) => {
+            if (e.target === overlay) close(false);
+        });
+        document.addEventListener('keydown', handleKey);
+
+        modal.querySelector('[data-role="confirm"]').focus();
+    });
+}
+window.showConfirmDialog = showConfirmDialog;
+
+/**
+ * Modal con la lista de campos obligatorios pendientes
+ * (reemplaza el alert de validación del formulario).
+ */
+function showValidationErrors(errors) {
+    const overlay = document.createElement('div');
+    overlay.className = 'app-dialog-overlay';
+    overlay.style.cssText = 'position:fixed;inset:0;z-index:3000;display:flex;align-items:center;justify-content:center;padding:1rem;background:rgba(15, 23, 42, 0.5);';
+
+    const modal = document.createElement('div');
+    modal.className = 'modal-content';
+    modal.style.maxWidth = '26rem';
+    modal.innerHTML = `
+        <div class="modal-header">
+            <h2>Faltan campos obligatorios</h2>
+        </div>
+        <div class="modal-body">
+            <ul style="margin:0;padding-left:1.25rem;color:#334155;">
+                ${errors.map(err => `<li style="margin-bottom:0.35rem;">${escapeHtml(err)}</li>`).join('')}
+            </ul>
+        </div>
+        <div class="modal-footer">
+            <button type="button" class="btn btn-primary" data-role="close">Aceptar</button>
+        </div>
+    `;
+
+    overlay.appendChild(modal);
+    document.body.appendChild(overlay);
+
+    const close = () => {
+        document.removeEventListener('keydown', handleKey);
+        overlay.remove();
+    };
+    const handleKey = (e) => {
+        if (e.key === 'Escape') close();
+    };
+
+    modal.querySelector('[data-role="close"]').addEventListener('click', close);
+    overlay.addEventListener('click', (e) => {
+        if (e.target === overlay) close();
+    });
+    document.addEventListener('keydown', handleKey);
+
+    modal.querySelector('[data-role="close"]').focus();
+}
+window.showValidationErrors = showValidationErrors;
 
 // Placeholders simples para evitar errores si aún no están implementados
 function showTemplatesModal() {
@@ -2253,7 +2390,7 @@ function renderTemplatesList() {
 function saveCurrentTemplate() {
     const name = document.getElementById('templateName').value.trim();
     if (!name) {
-        alert('Por favor, ingrese un nombre para la plantilla');
+        showNotification('Por favor, ingrese un nombre para la plantilla', 'error');
         return;
     }
 
@@ -2278,25 +2415,28 @@ function saveCurrentTemplate() {
     }
     updateTemplatesDropdown();
     document.getElementById('templateName').value = '';
-    alert('Plantilla "' + name + '" guardada correctamente');
+    showNotification(`Plantilla "${name}" guardada correctamente`, 'success');
 }
 
-function loadTemplate(templateId) {
+async function loadTemplate(templateId) {
     const template = appState.templates.find(t => t.id === templateId);
     if (!template) return;
 
-    if (!confirm('¿Está seguro de que desea cargar esta plantilla? Se cargarán todos los campos del formulario.')) {
-        return;
-    }
+    const ok = await showConfirmDialog(
+        'Cargar plantilla',
+        '¿Está seguro de que desea cargar esta plantilla? Se cargarán todos los campos del formulario.',
+        { confirmText: 'Cargar' }
+    );
+    if (!ok) return;
 
     if (template.version === '2.0' && template.data) {
         // Nuevo formato - carga completa del formulario
         setFormState(template.data);
-        alert('Plantilla "' + template.name + '" cargada correctamente');
+        showNotification(`Plantilla "${template.name}" cargada correctamente`, 'success');
     } else if (template.formState) {
         // Compatibilidad con formato antiguo
         setFormState(template.formState);
-        alert('Plantilla (formato antiguo) cargada correctamente.');
+        showNotification('Plantilla (formato antiguo) cargada correctamente.', 'success');
     } else if (template.data) {
         // Formato intermedio - solo diagnósticos e indicaciones
         const data = template.data;
@@ -2315,7 +2455,7 @@ function loadTemplate(templateId) {
         });
 
         toggleCustomFields();
-        alert('Plantilla cargada correctamente');
+        showNotification('Plantilla cargada correctamente', 'success');
     }
 
     const modal = document.querySelector('.modal');
@@ -2323,18 +2463,22 @@ function loadTemplate(templateId) {
     if (elements.loadTemplate) elements.loadTemplate.value = '';
 }
 
-function deleteTemplate(templateId) {
-    if (confirm('¿Está seguro de que desea eliminar esta plantilla?')) {
-        appState.templates = appState.templates.filter(t => t.id !== templateId);
-        saveAllData();
-        const templatesList = document.getElementById('templatesList');
-        if (templatesList) {
-            templatesList.innerHTML = renderTemplatesList();
-            attachTemplatesEventListeners(templatesList.closest('.modal'));
-        }
-        updateTemplatesDropdown();
-        alert('Plantilla eliminada correctamente');
+async function deleteTemplate(templateId) {
+    const ok = await showConfirmDialog(
+        'Eliminar plantilla',
+        '¿Está seguro de que desea eliminar esta plantilla?',
+        { confirmText: 'Eliminar' }
+    );
+    if (!ok) return;
+    appState.templates = appState.templates.filter(t => t.id !== templateId);
+    saveAllData();
+    const templatesList = document.getElementById('templatesList');
+    if (templatesList) {
+        templatesList.innerHTML = renderTemplatesList();
+        attachTemplatesEventListeners(templatesList.closest('.modal'));
     }
+    updateTemplatesDropdown();
+    showNotification('Plantilla eliminada correctamente', 'success');
 }
 
 function attachTemplatesEventListeners(container) {
@@ -2367,7 +2511,7 @@ function saveStaff() {
     const name = document.getElementById('staffName').value.trim();
     const role = document.getElementById('staffRole').value;
     if (!name || !role) {
-        alert('Por favor, complete los campos obligatorios (Nombre, Rol)');
+        showNotification('Por favor, complete los campos obligatorios (Nombre, Rol)', 'error');
         return;
     }
     const newStaff = { id: Date.now().toString(), name, role, createdAt: new Date().toISOString() };
@@ -2381,21 +2525,25 @@ function saveStaff() {
         staffList.innerHTML = renderStaffList();
         attachStaffEventListeners(staffList.closest('.modal'));
     }
-    alert('Personal agregado correctamente');
+    showNotification('Personal agregado correctamente', 'success');
 }
 
-function deleteStaff(staffId) {
-    if (confirm('¿Está seguro de que desea eliminar este personal?')) {
-        appState.staff = appState.staff.filter(s => s.id !== staffId);
-        saveAllData();
-        renderStaffCheckboxes();
-        const staffList = document.getElementById('staffList');
-        if (staffList) {
-            staffList.innerHTML = renderStaffList();
-            attachStaffEventListeners(staffList.closest('.modal'));
-        }
-        alert('Personal eliminado correctamente');
+async function deleteStaff(staffId) {
+    const ok = await showConfirmDialog(
+        'Eliminar personal',
+        '¿Está seguro de que desea eliminar este personal?',
+        { confirmText: 'Eliminar' }
+    );
+    if (!ok) return;
+    appState.staff = appState.staff.filter(s => s.id !== staffId);
+    saveAllData();
+    renderStaffCheckboxes();
+    const staffList = document.getElementById('staffList');
+    if (staffList) {
+        staffList.innerHTML = renderStaffList();
+        attachStaffEventListeners(staffList.closest('.modal'));
     }
+    showNotification('Personal eliminado correctamente', 'success');
 }
 
 function attachStaffEventListeners(container) {
@@ -2511,7 +2659,7 @@ function addNewDeviceType(event) {
             updateDeviceModalLists(modal);
             input.value = '';
         } else {
-            alert('El tipo de dispositivo ya existe.');
+            showNotification('El tipo de dispositivo ya existe.', 'warning');
         }
     }
 }
@@ -2529,7 +2677,7 @@ function addNewDeviceBrand(event) {
             updateDeviceModalLists(modal);
             input.value = '';
         } else {
-            alert('La marca de dispositivo ya existe.');
+            showNotification('La marca de dispositivo ya existe.', 'warning');
         }
     }
 }
@@ -2543,7 +2691,7 @@ function addNewDeviceModel(event) {
     const model = modelInput.value.trim();
 
     if (!type || !brand || !model) {
-        alert('Por favor, seleccione tipo, marca e ingrese un modelo.');
+        showNotification('Por favor, seleccione tipo, marca e ingrese un modelo.', 'warning');
         return;
     }
 
@@ -2563,50 +2711,62 @@ function addNewDeviceModel(event) {
         updateDeviceModelsList(modal);
         modelInput.value = '';
     } else {
-        alert('El modelo de dispositivo ya existe para este tipo y marca.');
+        showNotification('El modelo de dispositivo ya existe para este tipo y marca.', 'warning');
     }
 }
 
-function deleteDeviceType(value) {
-    if (confirm(`¿Está seguro de que desea eliminar el tipo "${value}"?`)) {
-        appState.commonData.deviceTypes = appState.commonData.deviceTypes.filter(item => item !== value);
-        if (appState.commonData.deviceModelsByTypeAndBrand) {
-            delete appState.commonData.deviceModelsByTypeAndBrand[value];
+async function deleteDeviceType(value) {
+    const ok = await showConfirmDialog(
+        'Eliminar tipo de dispositivo',
+        `¿Está seguro de que desea eliminar el tipo "${value}"?`,
+        { confirmText: 'Eliminar' }
+    );
+    if (!ok) return;
+    appState.commonData.deviceTypes = appState.commonData.deviceTypes.filter(item => item !== value);
+    if (appState.commonData.deviceModelsByTypeAndBrand) {
+        delete appState.commonData.deviceModelsByTypeAndBrand[value];
+    }
+    saveAllData();
+    const modal = document.querySelector('.modal');
+    if (modal) {
+        updateDeviceModalLists(modal);
+        updateDeviceModelsList(modal);
+    }
+}
+
+async function deleteDeviceBrand(value) {
+    const ok = await showConfirmDialog(
+        'Eliminar marca de dispositivo',
+        `¿Está seguro de que desea eliminar la marca "${value}"?`,
+        { confirmText: 'Eliminar' }
+    );
+    if (!ok) return;
+    appState.commonData.deviceBrands = appState.commonData.deviceBrands.filter(item => item !== value);
+    if (appState.commonData.deviceModelsByTypeAndBrand) {
+        for (const type in appState.commonData.deviceModelsByTypeAndBrand) {
+            delete appState.commonData.deviceModelsByTypeAndBrand[type][value];
         }
+    }
+    saveAllData();
+    const modal = document.querySelector('.modal');
+    if (modal) {
+        updateDeviceModalLists(modal);
+        updateDeviceModelsList(modal);
+    }
+}
+
+async function deleteDeviceModel(type, brand, model) {
+    const ok = await showConfirmDialog(
+        'Eliminar modelo de dispositivo',
+        `¿Está seguro de que desea eliminar el modelo "${model}"?`,
+        { confirmText: 'Eliminar' }
+    );
+    if (!ok) return;
+    if (appState.commonData.deviceModelsByTypeAndBrand?.[type]?.[brand]) {
+        appState.commonData.deviceModelsByTypeAndBrand[type][brand] = appState.commonData.deviceModelsByTypeAndBrand[type][brand].filter(item => item !== model);
         saveAllData();
         const modal = document.querySelector('.modal');
-        if (modal) {
-            updateDeviceModalLists(modal);
-            updateDeviceModelsList(modal);
-        }
-    }
-}
-
-function deleteDeviceBrand(value) {
-    if (confirm(`¿Está seguro de que desea eliminar la marca "${value}"?`)) {
-        appState.commonData.deviceBrands = appState.commonData.deviceBrands.filter(item => item !== value);
-        if (appState.commonData.deviceModelsByTypeAndBrand) {
-            for (const type in appState.commonData.deviceModelsByTypeAndBrand) {
-                delete appState.commonData.deviceModelsByTypeAndBrand[type][value];
-            }
-        }
-        saveAllData();
-        const modal = document.querySelector('.modal');
-        if (modal) {
-            updateDeviceModalLists(modal);
-            updateDeviceModelsList(modal);
-        }
-    }
-}
-
-function deleteDeviceModel(type, brand, model) {
-    if (confirm(`¿Está seguro de que desea eliminar el modelo "${model}"?`)) {
-        if (appState.commonData.deviceModelsByTypeAndBrand?.[type]?.[brand]) {
-            appState.commonData.deviceModelsByTypeAndBrand[type][brand] = appState.commonData.deviceModelsByTypeAndBrand[type][brand].filter(item => item !== model);
-            saveAllData();
-            const modal = document.querySelector('.modal');
-            if (modal) updateDeviceModelsList(modal);
-        }
+        if (modal) updateDeviceModelsList(modal);
     }
 }
 
@@ -2915,7 +3075,7 @@ function previewReport() {
 function generateReport() {
     const errors = validateForm();
     if (errors.length > 0) {
-        alert('Por favor, complete los siguientes campos obligatorios:\n\n' + errors.join('\n'));
+        showValidationErrors(errors);
         return;
     }
     
@@ -2930,7 +3090,7 @@ function generateReport() {
         }
     } catch (error) {
         console.error('Error generating report:', error);
-        alert('Error al generar el reporte');
+        showNotification('Error al generar el reporte', 'error');
     }
 }
 
@@ -3336,10 +3496,10 @@ function showAIModal(title, payload) {
     modal.querySelector('#copyAIPayloadBtn')?.addEventListener('click', () => {
         const ta = modal.querySelector('#aiPayload');
         if (!ta) return;
-        navigator.clipboard.writeText(ta.value).then(() => alert('Contexto copiado')).catch(() => {
+        navigator.clipboard.writeText(ta.value).then(() => showNotification('Contexto copiado', 'success')).catch(() => {
             ta.select();
             document.execCommand('copy');
-            alert('Contexto copiado');
+            showNotification('Contexto copiado', 'success');
         });
     });
 }
@@ -3467,10 +3627,10 @@ function clearForm() {
         setDefaultTimes();
         appState.formChanged = false;
 
-        alert('Formulario limpiado correctamente');
+        showNotification('Formulario limpiado correctamente', 'success');
     } catch (error) {
         console.error('Error clearing form:', error);
-        alert('Error al limpiar el formulario');
+        showNotification('Error al limpiar el formulario', 'error');
     }
 }
 
@@ -3545,13 +3705,17 @@ function attachMeasurementEventListeners() {
     });
 
     elements.measurementsList.querySelectorAll('.remove-measurement').forEach(btn => {
-        btn.addEventListener('click', function() {
+        btn.addEventListener('click', async function() {
             const measurementId = parseInt(this.dataset.id);
-            if (confirm('¿Está seguro de que desea eliminar esta medición?')) {
-                appState.measurements = appState.measurements.filter(m => m.id !== measurementId);
-                renderMeasurements();
-                appState.formChanged = true;
-            }
+            const ok = await showConfirmDialog(
+                'Eliminar medición',
+                '¿Está seguro de que desea eliminar esta medición?',
+                { confirmText: 'Eliminar' }
+            );
+            if (!ok) return;
+            appState.measurements = appState.measurements.filter(m => m.id !== measurementId);
+            renderMeasurements();
+            appState.formChanged = true;
         });
     });
 
@@ -4298,13 +4462,13 @@ function collectWizardStepData(step) {
     return data;
 }
 
-function applyWizardDataToForm() {
+async function applyWizardDataToForm() {
     const d = wizardState.data;
     
     // Apply data to main form
     if (d.procedureName && elements.procedureNameSelect) {
         elements.procedureNameSelect.value = d.procedureName;
-        updateProcedureCode(elements.procedureNameSelect, elements.procedureCodeInput);
+        await updateProcedureCode(elements.procedureNameSelect, elements.procedureCodeInput);
         toggleCustomFields();
     }
     if (d.procedureCode && elements.procedureCodeInput) elements.procedureCodeInput.value = d.procedureCode;
@@ -4315,7 +4479,7 @@ function applyWizardDataToForm() {
     // Prestaciones adicionales
     if (d.procedureName2 && elements.procedureName2Select) {
         elements.procedureName2Select.value = d.procedureName2;
-        updateProcedureCode(elements.procedureName2Select, elements.procedureCode2Input);
+        await updateProcedureCode(elements.procedureName2Select, elements.procedureCode2Input);
         if (elements.procedure2Section) {
             elements.procedure2Section.classList.remove('hidden');
             appState.additionalProceduresCount = 1;
@@ -4324,7 +4488,7 @@ function applyWizardDataToForm() {
     if (d.procedureCode2 && elements.procedureCode2Input) elements.procedureCode2Input.value = d.procedureCode2;
     if (d.procedureName3 && elements.procedureName3Select) {
         elements.procedureName3Select.value = d.procedureName3;
-        updateProcedureCode(elements.procedureName3Select, elements.procedureCode3Input);
+        await updateProcedureCode(elements.procedureName3Select, elements.procedureCode3Input);
         if (elements.procedure3Section) {
             elements.procedure3Section.classList.remove('hidden');
             elements.addProcedureBtn?.classList.add('hidden');
@@ -4426,13 +4590,13 @@ function prevWizardStep() {
     }
 }
 
-function finishWizard() {
+async function finishWizard() {
     if (!validateWizardStep(wizardState.currentStep)) return;
     
     // Save last step data
     wizardState.data = { ...wizardState.data, ...collectWizardStepData(wizardState.currentStep) };
     
-    applyWizardDataToForm();
+    await applyWizardDataToForm();
     closeWizardModal();
     renderReportSilently();
     
