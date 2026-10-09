@@ -1572,12 +1572,87 @@ function exportData() {
         link.href = URL.createObjectURL(dataBlob);
         link.download = `medical-report-data-${new Date().toISOString().split('T')[0]}.json`;
         link.click();
+        localStorage.setItem('lastBackupDate', new Date().toISOString());
         showNotification('Datos exportados correctamente', 'success');
     } catch (error) {
         console.error('Error exporting data:', error);
         showNotification('Error al exportar los datos', 'error');
     }
 }
+
+// Respaldo de datos: guarda una copia JSON usando File System Access API
+// (Chrome/Edge) con respaldo automático a descarga directa si no está disponible.
+async function backupToFile() {
+    const payload = {
+        procedures: appState.procedures,
+        templates: appState.templates,
+        staff: appState.staff,
+        commonData: appState.commonData,
+        exportDate: new Date().toISOString(),
+        version: '1.0'
+    };
+    const dataStr = JSON.stringify(payload, null, 2);
+    const stamp = new Date().toISOString().split('T')[0];
+    const filename = 'respaldo-informes-' + stamp + '.json';
+
+    if (window.showSaveFilePicker) {
+        try {
+            const handle = await window.showSaveFilePicker({
+                suggestedName: filename,
+                types: [{ description: 'Respaldo JSON', accept: { 'application/json': ['.json'] } }]
+            });
+            const writable = await handle.createWritable();
+            await writable.write(new Blob([dataStr], { type: 'application/json' }));
+            await writable.close();
+            try { localStorage.setItem('lastBackupDate', new Date().toISOString()); } catch (e) { /* sin acceso a storage */ }
+            showNotification('Respaldo guardado correctamente', 'success');
+            return;
+        } catch (err) {
+            if (err && err.name === 'AbortError') return; // El usuario canceló el diálogo
+            console.warn('File System Access no disponible, usando descarga directa:', err);
+        }
+    }
+
+    const blob = new Blob([dataStr], { type: 'application/json' });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = filename;
+    link.click();
+    setTimeout(() => URL.revokeObjectURL(link.href), 1000);
+    try { localStorage.setItem('lastBackupDate', new Date().toISOString()); } catch (e) { /* sin acceso a storage */ }
+    showNotification('Respaldo descargado correctamente', 'success');
+}
+
+// Muestra un recordatorio si han pasado más de 7 días sin respaldo.
+function checkBackupReminder() {
+    let last = null;
+    try { last = localStorage.getItem('lastBackupDate'); } catch (e) { return; }
+    if (!last) {
+        // Primer uso: registrar hoy para no molestar de inmediato
+        try { localStorage.setItem('lastBackupDate', new Date().toISOString()); } catch (e) { /* ignorar */ }
+        return;
+    }
+    const lastTime = new Date(last).getTime();
+    if (Number.isNaN(lastTime)) {
+        try { localStorage.setItem('lastBackupDate', new Date().toISOString()); } catch (e) { /* ignorar */ }
+        return;
+    }
+    const days = (Date.now() - lastTime) / 86400000;
+    if (days < 7) return;
+
+    showConfirmDialog(
+        'Respaldo de datos',
+        'Han pasado ' + Math.floor(days) + ' días desde el último respaldo. ¿Desea guardar una copia de seguridad ahora?',
+        { confirmText: 'Descargar respaldo', cancelText: 'Recordar luego', danger: false }
+    ).then(ok => {
+        if (ok) {
+            backupToFile();
+        } else {
+            try { localStorage.setItem('lastBackupDate', new Date().toISOString()); } catch (e) { /* ignorar */ }
+        }
+    });
+}
+window.backupToFile = backupToFile;
 
 // Valida el esquema de un archivo de datos importado antes de aplicarlo.
 // Devuelve un arreglo con los errores encontrados (vacío si es válido).
@@ -2920,6 +2995,9 @@ async function initializeApp() {
     // 9. Configurar event listeners principales
     attachMainEventListeners();
 
+    // 10. Recordatorio de respaldo semanal (con retraso para no solaparse con otras notificaciones)
+    setTimeout(checkBackupReminder, 2500);
+
     console.log('Aplicación inicializada correctamente');
 }
 
@@ -3057,6 +3135,9 @@ function attachMainEventListeners() {
                     break;
                 case 'exportBtn':
                     exportData();
+                    break;
+                case 'backupBtn':
+                    backupToFile();
                     break;
                 case 'importTriggerBtn':
                     const input = document.getElementById('importFile');
