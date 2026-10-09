@@ -1,4 +1,4 @@
-# CONTEXTO DEL PROYECTO: InformeMedico 17
+# CONTEXTO DEL PROYECTO: InformeMedico 19
 
 Eres un desarrollador web. Vas a continuar el trabajo sobre una aplicación web
 médica 100% estática (vanilla JS, sin build, sin frameworks). No rompas nada:
@@ -6,113 +6,147 @@ todo el comportamiento depende de IDs y clases que usa el JavaScript.
 
 ## 1. Ubicación y archivos
 Carpeta del proyecto (Windows):
-`C:\Users\LABOR\Documents\PANCHO\respaldo informes\InformeMedico 17\`
-
-Es una copia de la versión "InformeMedico 16" (carpeta hermana:
-`C:\Users\LABOR\Documents\PANCHO\respaldo informes\InformeMedico 16\`),
-creada para editar con libertad sin afectar la versión en uso.
+`C:\Users\LABOR\Documents\PANCHO\respaldo informes\InformeMedico 19\`
 
 Archivos clave:
-- `index.html` — estructura y layout de la app (antes `informe_medico16.html`)
-- `style.css` — estilos de la interfaz (contiene secciones "MEJORAS DE DISEÑO UI/UX - PASE 1 y PASE 2")
-- `report-styles.css` — estilos del informe generado (impresión, PDF y copiado)
-- `script_organized.js` — toda la lógica (~4300 líneas, archivo único)
+- `index.html` — estructura y layout de la app
+- `style.css` — estilos de la interfaz
+- `report-styles.css` — estilos del informe generado (impresión y copiado)
+- `script_organized.js` — toda la lógica (~5100 líneas, archivo único)
 - `data.json` — datos iniciales; la app persiste en localStorage
-- `common-data-modal.html` — modal alternativo de datos comunes (referencia)
+- `common-data-modal.html` — OBSOLETO: repite IDs de index.html
+  (exitDiagnosesList, commonDataNewIndication, etc.). NO incluirlo en la app.
 - `TODO.md` — pendientes
 
 La app se abre directo con el archivo HTML (protocolo `file://`). No hay servidor.
-`node` NO está instalado en el equipo; no uses comandos que lo requieran.
+`node` SÍ está instalado (v22): se puede usar `node --check` para validar
+sintaxis JS, y funciona sin problemas sobre `file://`.
 
-## 2. Qué hace la app
+## 2. Control de versiones: GIT EN USO
+La carpeta es un repositorio git (identidad local: LABOR). Historial:
+- `157d28c` Estado inicial (pre-mejoras)
+- `ec32bd0` Bloque A: reemplazo de alert/confirm por notificaciones y modales propios
+- `accd0d8` Bloque B: fecha del procedimiento, advertencia medianoche, código muerto fuera
+- `beb76df` Bloque C: escapado HTML seguro + validación de esquema al importar
+- `bd19755` Bloque D: respaldo de datos + recordatorio semanal
+
+Antes de editar: `git status` / `git diff`. Commits pequeños y en español.
+El flujo de carpetas "InformeMedico N" puede seguir usándose como respaldo físico,
+pero el historial real vive en git.
+
+## 3. Qué hace la app
 Sistema de registro de informes de procedimientos médicos de electrofisiología:
 - Formulario con pestañas (Paciente, Personal, Diagnósticos, Descripción con
-  mediciones, Indicaciones) y campos de procedimiento/prestaciones adicionales.
-- Asistente paso a paso (modal wizard de 8 pasos).
-- Gestión de datos comunes (comunas, previsiones, procedencias, diagnósticos,
-  dispositivos, indicaciones) y de procedimientos/personal/plantillas.
-- Generación de informe: botones de acción (Limpiar, Vista Previa, Descargar PDF)
-  y, en el panel del informe: "Copiar Informe", "Descargar PDF" y "Copiar Imagen".
+  mediciones, Indicaciones), fecha del procedimiento y prestaciones adicionales.
+- Asistente paso a paso (modal wizard de 8 pasos) con fecha incluida.
+- Gestión de datos comunes, procedimientos, personal, plantillas y dispositivos.
+- Generación de informe con "Vista Previa" y, en el panel del informe,
+  "Copiar Informe" (pegado con formato en Medicap). Imprimir vía menú navegador.
 
-Dependencias por CDN (requieren internet): Tailwind CSS, Font Awesome 6,
-html2pdf.js (0.10.1). No agregar dependencias nuevas sin permiso del usuario.
+Dependencias locales (`vendor/`, no requieren internet): Tailwind CSS, Font
+Awesome 6. No agregar dependencias nuevas sin permiso del usuario.
 
-## 3. Reglas inquebrantables
-- NO cambiar IDs ni clases que usa `script_organized.js` (busca primero con grep).
+## 4. Reglas inquebrantables
+- NO cambiar IDs ni clases que usa `script_organized.js` (grep primero).
 - NO eliminar `.no-print` ni `data-html2canvas-ignore="true"`.
-- El informe debe seguir siendo compatible con el botón "Copiar Informe"
-  (estilos inline computados): conservar legibilidad y colores sólidos en `.report-*`.
-- Verificar siempre: llaves balanceadas en CSS/JS. (No hay node; valida con
-  conteo de `{`/`}`.)
+- El informe debe seguir siendo compatible con "Copiar Informe" (pipeline de
+  estilos inline; ver 5a).
+- PROHIBIDO reintroducir `alert()`/`confirm()`: usar `showNotification()`
+  (tipos: success, error, warning, info) y `showConfirmDialog()` (Promise).
+- `escapeHtml()` usa entidades NUMÉRICAS (&#38; &#60; &#62; &#34; &#39;) a
+  propósito: escapa comillas y es seguro en atributos. NO convertirlas a
+  entidades con nombre (& etc.): algunas herramientas las colapsan a su
+  carácter literal y rompen el escapado. Verificar tras editar esa función.
+- Las funciones de borrado y carga son ASYNC (await showConfirmDialog):
+  deleteProcedure, deleteTemplate, deleteStaff, deleteDeviceType/Brand/Model,
+  deleteCommonDataItem, newReport, loadTemplate, updateProcedureCode,
+  applyWizardDataToForm, finishWizard. Conservar las cadenas de await.
+- Verificar sintaxis con `node --check script_organized.js` tras editar JS.
 
-## 4. Lo que YA está resuelto (no rehacer sin motivo)
-### 4a. Copiado con formato hacia Medicap (PROBLEMA PRINCIPAL YA RESUELTO)
-El destino final es "Medicap", un editor web rich-text que elimina los colores
-del HTML genérico pegado, pero SÍ respeta el HTML que imita el formato de
-Office/Excel (por eso acepta pegados desde Excel).
+## 5. Lo que YA está resuelto (no rehacer sin motivo)
 
-Implementación actual en `script_organized.js`:
-- `copyFormattedReport()` — botón "Copiar Informe" (`copyFormattedReportBtn`).
-  Clona `#reportContent`, elimina `.no-print`/`data-html2canvas-ignore`,
-  llama a `normalizeTablesForRichText` ANTES de `inlineAllStyles` (orden crítico),
-  envuelve en `buildOfficeHtml` y escribe al portapapeles.
-- `ClipboardItem` con SOLO `text/html` (sin `text/plain`): obliga al editor rico
-  a usar el HTML (si se ofrece texto plano, algunos editores pegan plano).
-  Si falla, respaldo `fallbackCopyHtml()` (execCommand).
-- `normalizeTablesForRichText()` — tablas al estilo Excel:
-  atributo `border`, `bgcolor` (#2563eb cabeceras, #f8fafc filas alternas),
-  `background:` shorthand + `background-color`, bordes `1pt solid`,
-  estilos `mso-*` (mso-background-source, mso-pattern, mso-font-charset).
-- `inlineAllStyles()` + `rgbToHex()` — inlinea estilos computados convirtiendo
-  `rgb()` a hex (colores translúcidos se dejan igual).
-- `buildOfficeHtml()` — envuelve el fragmento como documento Office:
-  namespaces o/x/w, `<meta name="ProgId" content="Excel.Sheet">`,
-  `<meta name="Generator" content="Microsoft Excel 15">`, comentarios
-  condicionales `<!--[if gte mso 9]><xml><x:ExcelWorkbook>...` y `<w:WordDocument>`,
-  `<style>` con `@page WordSection1`. NO incluye `<title>` (se quitó porque
-  aparecía como texto sin formato al pegar).
-- `showCopyFeedback(message, btnEl)` — feedback en el botón (indica la ruta:
-  "Copiado (HTML moderno)" vs "Copiado (respaldo execCommand)").
-- `inspectReportHtml()` — helper de depuración (consola): genera el mismo HTML,
-  lo muestra en un modal y lo deja en `window.__lastCopiedHtml`.
+### 5a. Copiado con formato hacia Medicap (SIN CAMBIOS, RESUELTO)
+El destino final es "Medicap", editor rich-text que elimina colores del HTML
+genérico pero respeta el HTML estilo Office/Excel.
 
-Resultado verificado por el usuario: pega con formato y colores en Medicap.
-También pega con formato en Google Docs.
+Pipeline en `script_organized.js` (NO tocar el orden):
+- `copyFormattedReport()` — clona `#reportContent`, limpia `.no-print`/
+  `data-html2canvas-ignore`, `normalizeTablesForRichText` ANTES de
+  `inlineAllStyles` (orden crítico), `buildOfficeHtml`, ClipboardItem
+  (text/html + text/plain), respaldo `fallbackCopyHtml()` (execCommand).
+- `normalizeTablesForRichText()` — atributos `border`/`bgcolor`, shorthand
+  `background:`, bordes `1pt solid`, estilos `mso-*`.
+- `inlineAllStyles()` + `rgbToHex()` — inlinea estilos computados (rgb a hex).
+- `buildOfficeHtml()` — namespaces o/x/w, ProgId Excel.Sheet, condicionales
+  mso, `@page WordSection1`. Sin `<title>`.
+- `showCopyFeedback()` — feedback en el botón; `inspectReportHtml()` depura
+  (mismo HTML en modal + `window.__lastCopiedHtml`).
 
-### 4b. "Copiar Imagen" (botón `copyReportImageBtn`, verde)
-`copyReportAsImage()` captura `#generatedReport` con `html2canvas` (CDN) y escribe
-PNG al portapapeles. OJO: si el CDN de html2pdf no carga (sin internet), falla
-con "La librería de captura (html2canvas) no está disponible". El usuario
-prefiere el pegado en formato texto, no imagen. Pregúntale si quiere conservar
-o eliminar este botón antes de tocarlo.
+Verificado: pega con formato y colores en Medicap y Google Docs.
 
-### 4c. Diseño visual
-`style.css` tiene dos bloques de mejoras al final: "MEJORAS DE DISEÑO VISUAL -
-UI/UX" (PASE 1) y "MEJORAS DE DISEÑO UI/UX - PASE 2" (PASE 2). Incluyen:
-- Modales estáticos (`#commonDataModal`, `#wizardModal`) ahora como overlay
-  centrado con backdrop (antes se renderizaban en el flujo de la página).
-- Estilos base para `.modal-content`, `.modal-header`, `.modal-close-btn`,
-  `.modal-body`, `.modal-footer`.
-- `.app-header` con gradiente y botones frosted; SE QUITÓ su `overflow: hidden`
-  porque recortaba el menú desplegable "Opciones" (bug corregido).
-- Botones, pestañas, inputs, checkboxes, scrollbars y responsive mejorados.
+### 5b. Diálogos propios (Bloque A)
+- `showConfirmDialog(titulo, mensaje, {confirmText, cancelText, danger})` ->
+  Promise<boolean>; overlay z-3000, clase `.modal-content` existente, Escape
+  cancela, clic fuera cancela.
+- `showValidationErrors(errores)` — modal con lista de campos faltantes
+  (reemplaza el alert de validateForm).
+- `showNotification(mensaje, tipo)` — 4 tipos con iconos, z-4000, escapa el
+  mensaje con escapeHtml.
 
-## 5. Estado actual / pendientes conocidos
-- Copiar con formato: RESUELTO y verificado en Medicap y Google Docs.
-- Revisar `TODO.md` para pendientes de funcionalidad.
-- Posibles mejoras a proponer al usuario (no implementar sin confirmar):
-  quitar/ajustar el botón "Copiar Imagen"; más opciones de pegado; mejoras de
-  accesibilidad; modo oscuro (ya se mencionó).
+### 5c. Fecha del procedimiento (Bloque B)
+- IDs: `procedureDate` (formulario), `wiz-procedureDate` (wizard paso 1),
+  `procedureDateError`.
+- Helpers: `toISODate(fecha)` (ISO yyyy-mm-dd) y `formatDateEsCL(iso)`
+  (formato largo es-CL, parseo local sin desfase UTC).
+- `generateReportHtml()` usa `formatDateEsCL(data.procedureDate)` con respaldo
+  en la fecha de hoy. NO volver a usar `new Date()` como fecha del informe.
+- Persistida en getFormState/setFormState (autosave y plantillas) y en el
+  resumen del wizard (paso 8).
+- Advertencia NO bloqueante si hora de término < inicio (cruce de medianoche);
+  `setDefaultTimes()` limita la hora por defecto a 23:59.
 
-## 6. Cómo trabajar seguro
-- Antes de editar, grep en `script_organized.js` para confirmar qué clases/IDs usa.
-- Cambios en CSS/JS: verificar balance de `{`/`}` al final.
-- Los cambios se prueban recargando el archivo HTML en el navegador
-  (el usuario usa F12/consola).
+### 5d. Seguridad (Bloque C)
+- `escapeHtml()` reescrito: escapa y comillas (seguro en atributos value=,
+  data-value=, title=). Todos los renders de datos de usuario lo usan.
+- `validateImportedData(data)` — valida esquema del JSON importado (claves y
+  tipos; procedures/templates/staff/commonData incl.
+  deviceModelsByTypeAndBrand). `importData()` la llama ANTES del confirm y
+  rechaza con notificación si hay errores.
+
+### 5e. Respaldo de datos (Bloque D)
+- Botón "Respaldar datos" (`backupBtn`) en menú Opciones.
+- `backupToFile()` — File System Access API (`showSaveFilePicker`,
+  Chrome/Edge) con respaldo a descarga directa si no está disponible.
+- `checkBackupReminder()` — al iniciar (setTimeout 2.5s), si pasaron >7 días
+  sin respaldo ofrece "Descargar respaldo" / "Recordar luego".
+- `localStorage.lastBackupDate` se actualiza en todo respaldo/exportación.
+
+### 5f. Diseño visual
+`style.css` mantiene los bloques "MEJORAS DE DISEÑO VISUAL - UI/UX" (PASE 1)
+y "MEJORAS DE DISEÑO UI/UX - PASE 2": modales overlay, `.app-header` gradiente,
+scrollbars, etc. Los diálogos nuevos (5b) reutilizan `.modal-content`.
+
+## 6. Estado actual / pendientes conocidos
+- Copiar con formato: RESUELTO y verificado.
+- Bloques A-D verificados con `node --check` + smoke test de funciones puras
+  (escapeHtml, fechas, validador): 19 asertions OK.
+- PENDIENTE de prueba en navegador por el usuario (checklist en la conversación):
+  fecha en informe, wizard completo, diálogos de borrado, respaldo, pegado en
+  Medicap tras recargar.
+- Eliminar `common-data-modal.html` (obsoleto, IDs colisionables): decidido NO
+  hacerlo aún; preguntar antes.
+- Posibles mejoras futuras (no implementar sin confirmar): dividir
+  script_organized.js en varios archivos `<script>` (revisar tras git),
+  accesibilidad de modales, modo oscuro, ítems de TODO.md.
+
+## 7. Cómo trabajar seguro
+- `git status` / `git diff` antes y después; commit por cambio lógico.
+- Grep de IDs/clases antes de tocar HTML o JS.
+- `node --check script_organized.js` tras cada edición JS.
+- Los cambios se prueban recargando el HTML en el navegador (F12/consola).
 - Mantén el idioma de la conversación en español.
 
-## 7. Instrucción inicial sugerida
-Continúa el trabajo. Lee primero `index.html`, `script_organized.js`,
-`style.css` y `report-styles.css` para familiarizarte, luego revisa `TODO.md`
-y propón el siguiente paso más valioso (sin modificar nada hasta que el usuario
-lo apruebe).
+## 8. Instrucción inicial sugerida
+Continúa el trabajo. Lee `PROMPT_CONTINUACION.md` (este archivo),
+`index.html` y `script_organized.js`; revisa `git log --oneline` y `TODO.md`.
+Propón el siguiente paso más valioso sin modificar nada hasta aprobación.
