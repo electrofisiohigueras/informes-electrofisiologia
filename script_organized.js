@@ -11,37 +11,6 @@ let predefinedData = {};
 let defaultMeasurements = [];
 let defaultIndications = [];
 
-async function saveDataToJson() {
-    try {
-        const updatedData = {
-            ...predefinedData,
-            commonData: {
-                ...predefinedData.commonData,
-                indications: appState.commonData.indications
-            }
-        };
-
-        const response = await fetch('data.json', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(updatedData, null, 2)
-        });
-
-        if (!response.ok) {
-            throw new Error('Error saving data');
-        }
-
-        // Actualizar los datos en memoria
-        predefinedData = updatedData;
-        // Actualizar los checkboxes del formulario
-        updateIndicationsCheckboxes();
-    } catch (error) {
-        console.error('Error saving data:', error);
-    }
-}
-
 async function loadPredefinedData() {
     // Si estamos en protocolo file://, saltar fetch para evitar error CORS en consola
     if (window.location.protocol === 'file:') {
@@ -188,6 +157,7 @@ function initializeElements() {
         procedureNameSelect: document.getElementById('procedureName'),
         customProcedureInput: document.getElementById('customProcedure'),
         procedureCodeInput: document.getElementById('procedureCode'),
+        procedureDate: document.getElementById('procedureDate'),
         startTime: document.getElementById('startTime'),
         endTime: document.getElementById('endTime'),
         
@@ -293,6 +263,24 @@ function escapeHtml(text) {
     const div = document.createElement('div');
     div.textContent = text;
     return div.innerHTML;
+}
+
+// Convierte una fecha a formato ISO yyyy-mm-dd (para input[type="date"])
+function toISODate(date) {
+    const y = date.getFullYear();
+    const m = String(date.getMonth() + 1).padStart(2, '0');
+    const d = String(date.getDate()).padStart(2, '0');
+    return `${y}-${m}-${d}`;
+}
+
+// Formatea una fecha ISO (yyyy-mm-dd) en formato largo chileno (es-CL).
+// Devuelve la cadena original si no se puede interpretar.
+function formatDateEsCL(dateStr) {
+    if (!dateStr) return '';
+    const parts = String(dateStr).split('-').map(Number);
+    if (parts.length !== 3 || parts.some(n => Number.isNaN(n))) return String(dateStr);
+    const date = new Date(parts[0], parts[1] - 1, parts[2]);
+    return date.toLocaleDateString('es-CL', { year: 'numeric', month: 'long', day: 'numeric' });
 }
 
 function createModal(title, content) {
@@ -604,13 +592,22 @@ function showSaveIndicator() {
 
 function setDefaultTimes() {
     const now = new Date();
+
+    // Fecha del procedimiento: hoy por defecto
+    if (elements.procedureDate && !elements.procedureDate.value) {
+        elements.procedureDate.value = toISODate(now);
+    }
+
     if (elements.startTime && !elements.startTime.value) {
         elements.startTime.value = now.toTimeString().slice(0, 5);
     }
     
     if (elements.endTime && !elements.endTime.value) {
         const endDateTime = new Date(now.getTime() + 60 * 60 * 1000); // +1 hour
-        elements.endTime.value = endDateTime.toTimeString().slice(0, 5);
+        // Evitar proponer una hora del día siguiente si se cruza la medianoche
+        elements.endTime.value = endDateTime.getDate() !== now.getDate()
+            ? '23:59'
+            : endDateTime.toTimeString().slice(0, 5);
     }
 }
 
@@ -1415,6 +1412,7 @@ function getFormState() {
             procedureName: elements.procedureNameSelect.value || '',
             customProcedure: elements.customProcedureInput?.value || '',
             procedureCode: elements.procedureCodeInput?.value || '',
+            procedureDate: elements.procedureDate?.value || '',
             procedureName2: elements.procedureName2Select?.value || '',
             customProcedure2: elements.customProcedure2Input?.value || '',
             procedureCode2: elements.procedureCode2Input?.value || '',
@@ -1482,7 +1480,7 @@ function setFormState(formState) {
         }
         
         const optionalFields = [
-            'startTime', 'endTime', 'commune', 'healthInsurance', 'origin',
+            'startTime', 'endTime', 'procedureDate', 'commune', 'healthInsurance', 'origin',
             'procedureDescription', 'additionalIndications', 'admissionReason'
         ];
         
@@ -3045,6 +3043,10 @@ function validateForm() {
         errors.push('Código del procedimiento es obligatorio');
     }
     
+    if (!elements.procedureDate?.value) {
+        errors.push('La fecha del procedimiento es obligatoria');
+    }
+    
     if (!elements.startTime?.value) {
         errors.push('Hora de inicio es obligatoria');
     }
@@ -3077,6 +3079,11 @@ function generateReport() {
     if (errors.length > 0) {
         showValidationErrors(errors);
         return;
+    }
+    
+    // Advertencia no bloqueante: los procedimientos pueden cruzar la medianoche
+    if (elements.startTime?.value && elements.endTime?.value && elements.endTime.value < elements.startTime.value) {
+        showNotification('Advertencia: la hora de término es anterior a la de inicio. Verifique si el procedimiento cruzó la medianoche.', 'warning');
     }
     
     try {
@@ -3127,6 +3134,7 @@ function collectReportData() {
         // Procedimiento
         procedureName: procedureName || '',
         procedureCode: elements.procedureCodeInput?.value || '',
+        procedureDate: elements.procedureDate?.value || '',
         startTime: elements.startTime?.value || '',
         endTime: elements.endTime?.value || '',
         // Datos clínicos
@@ -3152,9 +3160,11 @@ function collectReportData() {
 
 
 function generateReportHtml(data) {
-    const currentDate = new Date().toLocaleDateString('es-CL', {
-        year: 'numeric', month: 'long', day: 'numeric'
-    });
+    // Fecha del procedimiento ingresada por el usuario (respaldo: fecha de hoy)
+    const currentDate = formatDateEsCL(data.procedureDate) ||
+        new Date().toLocaleDateString('es-CL', {
+            year: 'numeric', month: 'long', day: 'numeric'
+        });
 
     const sectionTitle = (title) => `<div class="report-box-title">${title}</div>`;
 
@@ -3417,6 +3427,7 @@ function buildAIContext(section) {
         procedimiento: {
             nombre: data.procedureName,
             codigo: data.procedureCode,
+            fecha: data.procedureDate,
             horaInicio: data.startTime,
             horaTermino: data.endTime,
             adicionales: data.additionalProcedures
@@ -4366,12 +4377,17 @@ function validateWizardStep(step) {
         case 1: // Procedimiento Principal
             const procName = document.getElementById('wiz-procedureName')?.value;
             const procCode = document.getElementById('wiz-procedureCode')?.value;
+            const procDate = document.getElementById('wiz-procedureDate')?.value;
             const startTime = document.getElementById('wiz-startTime')?.value;
             const endTime = document.getElementById('wiz-endTime')?.value;
             if (!procName) errors.push('Nombre del procedimiento es obligatorio');
             if (!procCode) errors.push('Código del procedimiento es obligatorio');
+            if (!procDate) errors.push('La fecha del procedimiento es obligatoria');
             if (!startTime) errors.push('Hora de inicio es obligatoria');
             if (!endTime) errors.push('Hora de término es obligatoria');
+            if (startTime && endTime && endTime < startTime) {
+                showNotification('Advertencia: la hora de término es anterior a la de inicio. Verifique si el procedimiento cruzó la medianoche.', 'warning');
+            }
             break;
         case 3: // Datos del Paciente
             const commune = document.getElementById('wiz-commune')?.value;
@@ -4411,6 +4427,7 @@ function collectWizardStepData(step) {
         case 1:
             data.procedureName = document.getElementById('wiz-procedureName')?.value || '';
             data.procedureCode = document.getElementById('wiz-procedureCode')?.value || '';
+            data.procedureDate = document.getElementById('wiz-procedureDate')?.value || '';
             data.customProcedureName = document.getElementById('wiz-customProcedureName')?.value || '';
             data.startTime = document.getElementById('wiz-startTime')?.value || '';
             data.endTime = document.getElementById('wiz-endTime')?.value || '';
@@ -4475,6 +4492,7 @@ async function applyWizardDataToForm() {
     if (d.customProcedureName && elements.customProcedureInput) elements.customProcedureInput.value = d.customProcedureName;
     if (d.startTime && elements.startTime) elements.startTime.value = d.startTime;
     if (d.endTime && elements.endTime) elements.endTime.value = d.endTime;
+    if (d.procedureDate && elements.procedureDate) elements.procedureDate.value = d.procedureDate;
     
     // Prestaciones adicionales
     if (d.procedureName2 && elements.procedureName2Select) {
@@ -4628,6 +4646,10 @@ function renderWizardStep(step) {
                         <div class="wizard-form-group">
                             <label class="wizard-form-label">Código <span class="required">*</span></label>
                             <input type="text" id="wiz-procedureCode" class="wizard-form-input" value="${escapeHtml(wizardState.data.procedureCode || '')}" placeholder="Ej: 17.0012">
+                        </div>
+                        <div class="wizard-form-group">
+                            <label class="wizard-form-label">Fecha <span class="required">*</span></label>
+                            <input type="date" id="wiz-procedureDate" class="wizard-form-input" value="${escapeHtml(wizardState.data.procedureDate || toISODate(new Date()))}">
                         </div>
                         <div class="wizard-form-group">
                             <label class="wizard-form-label">Hora de Inicio <span class="required">*</span></label>
@@ -4887,6 +4909,10 @@ function renderWizardStep(step) {
                         <div class="wizard-summary-item">
                             <span class="wizard-summary-label">Horario:</span>
                             <span class="wizard-summary-value">${wizardState.data.startTime || '--:--'} - ${wizardState.data.endTime || '--:--'}</span>
+                        </div>
+                        <div class="wizard-summary-item">
+                            <span class="wizard-summary-label">Fecha:</span>
+                            <span class="wizard-summary-value">${escapeHtml(formatDateEsCL(wizardState.data.procedureDate) || 'No especificada')}</span>
                         </div>
                         <div class="wizard-summary-item">
                             <span class="wizard-summary-label">Comuna:</span>
