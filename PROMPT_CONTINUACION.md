@@ -73,7 +73,7 @@ Dependencias locales (`vendor/`, no requieren internet): Tailwind CSS, Font
 Awesome 6. No agregar dependencias nuevas sin permiso del usuario.
 
 ## 4. Reglas inquebrantables
-- NO cambiar IDs ni clases que usa `script_organized.js` (grep primero).
+- NO cambiar IDs ni clases que usa el JS en `js/*.js` (grep primero).
 - NO eliminar `.no-print` ni `data-html2canvas-ignore="true"`.
 - El informe debe seguir siendo compatible con "Copiar Informe" (pipeline de
   estilos inline; ver 5a).
@@ -87,7 +87,7 @@ Awesome 6. No agregar dependencias nuevas sin permiso del usuario.
   deleteProcedure, deleteTemplate, deleteStaff, deleteDeviceType/Brand/Model,
   deleteCommonDataItem, newReport, loadTemplate, updateProcedureCode,
   applyWizardDataToForm, finishWizard. Conservar las cadenas de await.
-- Verificar sintaxis con `node --check script_organized.js` tras editar JS.
+- Verificar sintaxis con `node --check` en cada archivo `js/` editado.
 
 ## 5. Lo que YA está resuelto (no rehacer sin motivo)
 
@@ -95,7 +95,7 @@ Awesome 6. No agregar dependencias nuevas sin permiso del usuario.
 El destino final es "Medicap", editor rich-text que elimina colores del HTML
 genérico pero respeta el HTML estilo Office/Excel.
 
-Pipeline en `script_organized.js` (NO tocar el orden):
+Pipeline en `js/08-copy-report.js` (NO tocar el orden):
 - `copyFormattedReport()` — clona `#reportContent`, limpia `.no-print`/
   `data-html2canvas-ignore`, `normalizeTablesForRichText` ANTES de
   `inlineAllStyles` (orden crítico), `buildOfficeHtml`, ClipboardItem
@@ -159,20 +159,19 @@ scrollbars, etc. Los diálogos nuevos (5b) reutilizan `.modal-content`.
 - PENDIENTE de prueba en navegador por el usuario (checklist en la conversación):
   fecha en informe, wizard completo, diálogos de borrado, respaldo, pegado en
   Medicap tras recargar.
-- Eliminar `common-data-modal.html` (obsoleto, IDs colisionables): decidido NO
-  hacerlo aún; preguntar antes.
-- Posibles mejoras futuras (no implementar sin confirmar): dividir
-  script_organized.js en varios archivos `<script>` (revisar tras git),
-  accesibilidad de modales, modo oscuro, ítems de TODO.md.
+- `common-data-modal.html` ELIMINADO (era obsoleto, IDs colisionables).
+- Posibles mejoras futuras (no implementar sin confirmar): accesibilidad de
+  modales (focus trap, ARIA), modo oscuro, validación inline por campo
+  (los <p class="error-message"> siguen vestigiales), ítems de TODO.md.
 
 ## 7. Cómo trabajar seguro
 - `git status` / `git diff` antes y después; commit por cambio lógico.
 - Grep de IDs/clases antes de tocar HTML o JS.
-- `node --check script_organized.js` tras cada edición JS.
+- `node --check` en cada archivo `js/` editado.
 - Los cambios se prueban recargando el HTML en el navegador (F12/consola).
 - Mantén el idioma de la conversación en español.
 
 ## 8. Instrucción inicial sugerida
 Continúa el trabajo. Lee `PROMPT_CONTINUACION.md` (este archivo),
-`index.html` y `script_organized.js`; revisa `git log --oneline` y `TODO.md`.
+`index.html` y los módulos de `js/`; revisa `git log --oneline` y `TODO.md`.
 Propón el siguiente paso más valioso sin modificar nada hasta aprobación.
