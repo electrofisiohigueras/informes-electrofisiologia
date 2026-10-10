@@ -12,23 +12,49 @@ Archivos clave:
 - `index.html` — estructura y layout de la app
 - `style.css` — estilos de la interfaz
 - `report-styles.css` — estilos del informe generado (impresión y copiado)
-- `script_organized.js` — toda la lógica (~5100 líneas, archivo único)
+- `js/` — lógica dividida en 16 módulos que se cargan EN ORDEN con
+  `<script>` clásicos (globals compartidos; NO usar ES modules, Chrome los
+  bloquea en `file://`):
+  - `01-data.js` datos iniciales, fallbackData, loadPredefinedData
+  - `02-state.js` appState, elements, initializeElements
+  - `03-utils.js` escapeHtml, toISODate, formatDateEsCL, createModal,
+    utilidades "agregar nuevo", setDefaultTimes, setupTabs
+  - `04-common-data.js` dropdowns de datos comunes
+  - `05-procedures.js` procedimientos: CRUD, códigos, prestaciones adicionales
+  - `06-measurements.js` render de mediciones y dispositivos
+  - `07-persistence.js` localStorage, autosave, export/import, respaldo
+  - `08-copy-report.js` pipeline de copiado estilo Office (Medicap)
+  - `09-common-data-manage.js` sección de gestión de datos comunes (CRUD)
+  - `10-dialogs.js` showNotification, showConfirmDialog, showValidationErrors
+  - `11-templates-staff-devices.js` plantillas, personal, modal dispositivos
+  - `12-init.js` initializeApp, attachMainEventListeners
+  - `13-report.js` validación, generación del informe, sugerencias IA
+  - `14-form-helpers.js` clearForm, listeners de mediciones, checkboxes staff
+  - `15-bootstrap.js` arranque (DOMContentLoaded -> initializeApp)
+  - `16-wizard.js` asistente completo de 8 pasos
 - `data.json` — datos iniciales; la app persiste en localStorage
-- `common-data-modal.html` — OBSOLETO: repite IDs de index.html
-  (exitDiagnosesList, commonDataNewIndication, etc.). NO incluirlo en la app.
-- `TODO.md` — pendientes
+- `TODO.md` — pendientes (completado)
+
+REGLA DEL SPLIT: los `let`/`const` top-level de cada archivo viven en el
+ámbito léxico global compartido; un módulo solo puede USAR declaraciones de
+módulos ANTERIORES en tiempo de carga (en runtime puede usar cualquiera).
+Al agregar funciones, ubicalas en el módulo temático correcto y respeta el
+orden de carga. Verificar SIEMPRE con `node --check` cada archivo editado.
 
 La app se abre directo con el archivo HTML (protocolo `file://`). No hay servidor.
 `node` SÍ está instalado (v22): se puede usar `node --check` para validar
 sintaxis JS, y funciona sin problemas sobre `file://`.
 
 ## 2. Control de versiones: GIT EN USO
-La carpeta es un repositorio git (identidad local: LABOR). Historial:
+La carpeta es un repositorio git (identidad local: LABOR). Historial reciente:
 - `157d28c` Estado inicial (pre-mejoras)
 - `ec32bd0` Bloque A: reemplazo de alert/confirm por notificaciones y modales propios
 - `accd0d8` Bloque B: fecha del procedimiento, advertencia medianoche, código muerto fuera
 - `beb76df` Bloque C: escapado HTML seguro + validación de esquema al importar
 - `bd19755` Bloque D: respaldo de datos + recordatorio semanal
+- `bcd6451` Eliminar common-data-modal.html obsoleto
+- `34bf513` UX: guardia al imprimir sin informe + confirmación al cerrar asistente
+- `a46e585` Refactor: dividir el JS en 16 módulos js/ (concatenación byte-exacto)
 
 Antes de editar: `git status` / `git diff`. Commits pequeños y en español.
 El flujo de carpetas "InformeMedico N" puede seguir usándose como respaldo físico,
