@@ -1,0 +1,577 @@
+// ===================================================================
+// 12. VALIDACIÓN Y GENERACIÓN DE REPORTES
+// ===================================================================
+
+// Funciones implementadas completamente
+function validateForm() {
+    const errors = [];
+    
+    if (!elements.procedureNameSelect?.value && !elements.customProcedureInput?.value) {
+        errors.push('Nombre del procedimiento es obligatorio');
+    }
+    
+    if (!elements.procedureCodeInput?.value) {
+        errors.push('Código del procedimiento es obligatorio');
+    }
+    
+    if (!elements.procedureDate?.value) {
+        errors.push('La fecha del procedimiento es obligatoria');
+    }
+    
+    if (!elements.startTime?.value) {
+        errors.push('Hora de inicio es obligatoria');
+    }
+    
+    if (!elements.endTime?.value) {
+        errors.push('Hora de término es obligatoria');
+    }
+    
+    if (!elements.commune?.value) {
+        errors.push('Comuna de procedencia es obligatoria');
+    }
+    
+    if (!elements.healthInsurance?.value) {
+        errors.push('Previsión de salud es obligatoria');
+    }
+    
+    if (!elements.origin?.value) {
+        errors.push('Procedencia es obligatoria');
+    }
+    
+    return errors;
+}
+
+function previewReport() {
+    generateReport();
+}
+
+function generateReport() {
+    const errors = validateForm();
+    if (errors.length > 0) {
+        showValidationErrors(errors);
+        return;
+    }
+    
+    // Advertencia no bloqueante: los procedimientos pueden cruzar la medianoche
+    if (elements.startTime?.value && elements.endTime?.value && elements.endTime.value < elements.startTime.value) {
+        showNotification('Advertencia: la hora de término es anterior a la de inicio. Verifique si el procedimiento cruzó la medianoche.', 'warning');
+    }
+    
+    try {
+        const reportData = collectReportData();
+        const reportHtml = generateReportHtml(reportData);
+        
+        if (elements.reportContent && elements.generatedReport) {
+            elements.reportContent.innerHTML = reportHtml;
+            elements.generatedReport.classList.remove('hidden');
+            elements.generatedReport.scrollIntoView({ behavior: 'smooth' });
+        }
+    } catch (error) {
+        console.error('Error generating report:', error);
+        showNotification('Error al generar el reporte', 'error');
+    }
+}
+
+// Genera el informe sin la validación estricta del formulario principal.
+// Se usa al terminar el asistente, que ya validó sus pasos obligatorios
+// durante la navegación, evitando el alert de campos faltantes.
+function renderReportSilently() {
+    try {
+        const reportData = collectReportData();
+        const reportHtml = generateReportHtml(reportData);
+        if (elements.reportContent && elements.generatedReport) {
+            elements.reportContent.innerHTML = reportHtml;
+            elements.generatedReport.classList.remove('hidden');
+            elements.generatedReport.scrollIntoView({ behavior: 'smooth' });
+        }
+    } catch (error) {
+        console.error('Error generating report:', error);
+        showNotification('No se pudo generar el informe. Revise los datos en el formulario principal.', 'error');
+    }
+}
+
+function collectReportData() {
+    const procedureName = elements.procedureNameSelect?.value === 'other' ?
+        elements.customProcedureInput?.value :
+        elements.procedureNameSelect?.options[elements.procedureNameSelect.selectedIndex]?.text;
+
+    const entryDiagnosis = elements.entryDiagnosisSelect?.value === 'custom' ?
+        elements.customEntryDiagnosis?.value : elements.entryDiagnosisSelect?.value;
+
+    const exitDiagnosis = elements.exitDiagnosisSelect?.value === 'custom' ?
+        elements.customExitDiagnosis?.value : elements.exitDiagnosisSelect?.value;
+
+    return {
+        // Procedimiento
+        procedureName: procedureName || '',
+        procedureCode: elements.procedureCodeInput?.value || '',
+        procedureDate: elements.procedureDate?.value || '',
+        startTime: elements.startTime?.value || '',
+        endTime: elements.endTime?.value || '',
+        // Datos clínicos
+        commune: elements.commune?.value || '',
+        healthInsurance: elements.healthInsurance?.value || '',
+        origin: elements.origin?.value || '',
+        entryDiagnosis: entryDiagnosis || '',
+        exitDiagnosis: exitDiagnosis || '',
+        admissionReason: elements.admissionReason?.value || '',
+        procedureDescription: document.getElementById('procedureDescription')?.value || '',
+        additionalIndications: document.getElementById('additionalIndications')?.value || '',
+        // Personal
+        mainDoctor: getSelectedStaff('mainDoctor'),
+        assistantNurse: getSelectedStaff('assistantNurse'),
+        tens: getSelectedStaff('tens'),
+        // Indicaciones y mediciones
+        indications: getSelectedIndications(),
+        measurements: elements.addMeasurementsCheckbox?.checked ? appState.measurements : [],
+        customParameters: appState.customParameters,
+        additionalProcedures: getAdditionalProcedures()
+    };
+}
+
+
+function generateReportHtml(data) {
+    // Fecha del procedimiento ingresada por el usuario (respaldo: fecha de hoy)
+    const currentDate = formatDateEsCL(data.procedureDate) ||
+        new Date().toLocaleDateString('es-CL', {
+            year: 'numeric', month: 'long', day: 'numeric'
+        });
+
+    const sectionTitle = (title) => `<div class="report-box-title">${title}</div>`;
+
+    // Título principal
+    let html = `
+    <div class="report-main-title" style="text-align:center;">${escapeHtml(data.procedureName).toUpperCase()}</div>
+    `;
+
+    // Datos del Procedimiento: recuadro reutilizable (ancho completo o media página)
+    const procedureBox = `
+        <div class="report-box" data-kind="procedure" style="width:100%;">
+            ${sectionTitle('Datos del Procedimiento')}
+            <table class="report-table report-data-table" style="font-size:14px;line-height:1.6;">
+                <tbody>
+                    <tr class="report-data-header-row">
+                        <th style="font-size:14px;">Nombre</th>
+                        <th style="font-size:14px;">Código</th>
+                        <th style="font-size:14px;">Fecha</th>
+                        <th style="font-size:14px;">Hora de Inicio</th>
+                        <th style="font-size:14px;">Hora de Término</th>
+                    </tr>
+                    <tr>
+                        <td style="font-size:14px;">${escapeHtml(data.procedureName)}</td>
+                        <td style="font-size:14px;">${escapeHtml(data.procedureCode)}</td>
+                        <td style="font-size:14px;">${currentDate}</td>
+                        <td style="font-size:14px;">${data.startTime || '—'}</td>
+                        <td style="font-size:14px;">${data.endTime || '—'}</td>
+                    </tr>
+                    <tr class="report-data-header-row">
+                        <th style="font-size:14px;">Comuna</th>
+                        <th style="font-size:14px;">Previsión</th>
+                        <th colspan="3" style="font-size:14px;">Procedencia</th>
+                    </tr>
+                    <tr>
+                        <td style="font-size:14px;">${escapeHtml(data.commune) || '—'}</td>
+                        <td style="font-size:14px;">${escapeHtml(data.healthInsurance) || '—'}</td>
+                        <td colspan="3" style="font-size:14px;">${escapeHtml(data.origin) || '—'}</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    `;
+
+    // Diagnósticos y Personal Médico: dos recuadros lado a lado (media página cada uno)
+    html += `
+    <table class="layout-table">
+        <tbody>
+            <tr>
+                <td style="width:50%;vertical-align:top;padding-right:6px;">
+                    <div class="report-box" data-kind="diagnostics" style="width:100%;">
+                        ${sectionTitle('Diagnósticos')}
+                        <table class="report-table report-data-table">
+                            <tbody>
+                                <tr class="report-data-header-row">
+                                    <th>Diagnóstico de Ingreso</th>
+                                    <th>Diagnóstico de Egreso</th>
+                                </tr>
+                                <tr>
+                                    <td>${escapeHtml(data.entryDiagnosis) || 'No especificado'}</td>
+                                    <td>${escapeHtml(data.exitDiagnosis) || 'No especificado'}</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                        ${data.admissionReason ? `
+                        <div class="report-subsection">
+                            <div class="report-subsection-title">Motivo de Ingreso</div>
+                            <p class="report-item" style="white-space:pre-line;">${escapeHtml(data.admissionReason)}</p>
+                        </div>` : ''}
+                    </div>
+                </td>
+                <td style="width:50%;vertical-align:top;padding-left:6px;">
+                    <div class="report-box" data-kind="staff" style="width:100%;">
+                        ${sectionTitle('Personal Médico')}
+                        <table class="report-table report-data-table">
+                            <tbody>
+                                <tr class="report-data-header-row">
+                                    <th style="width:35%;">Rol</th>
+                                    <th>Participantes</th>
+                                </tr>
+                                <tr>
+                                    <td class="report-label-cell">Médico(s) Principal(es)</td>
+                                    <td>${data.mainDoctor.length > 0 ? escapeHtml(data.mainDoctor.join(', ')) : 'No especificado'}</td>
+                                </tr>
+                                <tr>
+                                    <td class="report-label-cell">Enfermero(a/os)</td>
+                                    <td>${data.assistantNurse.length > 0 ? escapeHtml(data.assistantNurse.join(', ')) : 'No especificado'}</td>
+                                </tr>
+                                <tr>
+                                    <td class="report-label-cell">TENS</td>
+                                    <td>${data.tens.length > 0 ? escapeHtml(data.tens.join(', ')) : 'No especificado'}</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </td>
+            </tr>
+        </tbody>
+    </table>`;
+
+    // Datos del Procedimiento y Descripción: lado a lado (media página cada uno)
+    // si hay descripción; si no, Datos del Procedimiento ocupa el ancho completo.
+    if (data.procedureDescription) {
+        html += `
+        <table class="layout-table">
+            <tbody>
+                <tr>
+                    <td style="width:50%;vertical-align:top;padding-right:6px;">
+                        ${procedureBox}
+                    </td>
+                    <td style="width:50%;vertical-align:top;padding-left:6px;">
+                        <div class="report-box" data-kind="description" style="width:100%;">
+                            ${sectionTitle('Descripción del Procedimiento')}
+                            <p class="report-item" style="white-space:pre-line;">${escapeHtml(data.procedureDescription)}</p>
+                        </div>
+                    </td>
+                </tr>
+            </tbody>
+        </table>`;
+    } else {
+        html += procedureBox;
+    }
+
+    // Prestaciones Adicionales y Mediciones: lado a lado (media página cada una)
+
+    // --- Construir filas de mediciones (si las hay) ---
+    let measurementsRows = '';
+    if (data.measurements && data.measurements.length > 0) {
+        data.measurements.forEach(measurement => {
+            const valuedParameters = measurement.parameters.filter(param => param.value);
+            if (valuedParameters.length > 0) {
+                measurementsRows += `
+                    <tr class="report-measurement-title-row">
+                        <td colspan="2" class="report-measurement-title">${escapeHtml(measurement.name)}</td>
+                    </tr>
+                    ${valuedParameters.map(param => `
+                        <tr>
+                            <td>${escapeHtml(param.name)}</td>
+                            <td>${escapeHtml(param.value)}</td>
+                        </tr>
+                    `).join('')}`;
+            }
+        });
+
+        const valuedCustomParams = (data.customParameters || []).filter(param => param.value);
+        if (valuedCustomParams.length > 0) {
+            measurementsRows += `
+                <tr class="report-measurement-title-row">
+                    <td colspan="2" class="report-measurement-title">Parámetros Personalizados</td>
+                </tr>
+                ${valuedCustomParams.map(param => `
+                    <tr>
+                        <td>${escapeHtml(param.name)}</td>
+                        <td>${escapeHtml(param.value)}</td>
+                    </tr>
+                `).join('')}`;
+        }
+    }
+
+    // --- Caja de prestaciones adicionales (condicional) ---
+    let additionalCell = '';
+    if (data.additionalProcedures && data.additionalProcedures.length > 0) {
+        additionalCell = `
+        <div class="report-box" data-kind="additional" style="width:100%;">
+            ${sectionTitle('Prestaciones Adicionales')}
+            <table class="report-table report-data-table">
+                <tbody>
+                    <tr class="report-data-header-row">
+                        <th>Procedimiento</th>
+                        <th style="width:30%;">Código</th>
+                    </tr>
+                    ${data.additionalProcedures.map(proc => `
+                        <tr>
+                            <td>${escapeHtml(proc.name)}</td>
+                            <td>${escapeHtml(proc.code)}</td>
+                        </tr>
+                    `).join('')}
+                </tbody>
+            </table>
+        </div>`;
+    }
+
+    // --- Caja de mediciones (condicional) ---
+    let measurementsCell = '';
+    if (measurementsRows) {
+        measurementsCell = `
+        <div class="report-box" data-kind="measurements" style="width:100%;">
+            ${sectionTitle('Mediciones')}
+            <table class="report-table report-measurements-table">
+                <tbody>
+                    <tr class="report-data-header-row">
+                        <th style="width:50%;">Parámetro</th>
+                        <th>Valor</th>
+                    </tr>
+                    ${measurementsRows}
+                </tbody>
+            </table>
+        </div>`;
+    }
+
+    // --- Fila lado a lado (media página cada una); si solo hay una, celda vacía de relleno ---
+    if (additionalCell || measurementsCell) {
+        const both = additionalCell && measurementsCell;
+        html += `
+        <table class="layout-table">
+            <tbody>
+                <tr>
+                    ${additionalCell ? `<td style="width:50%;vertical-align:top;${both ? 'padding-right:6px;' : ''}">${additionalCell}</td>` : ''}
+                    ${measurementsCell ? `<td style="width:50%;vertical-align:top;${both ? 'padding-left:6px;' : ''}">${measurementsCell}</td>` : ''}
+                    ${both ? '' : '<td style="width:50%;padding:0;margin:0;"></td>'}
+                </tr>
+            </tbody>
+        </table>`;
+    }
+
+// Descripción del procedimiento (movida arriba, lado a lado con Datos del Procedimiento)
+
+// Indicaciones post-procedimiento (media página, alineadas a la izquierda)
+    if (data.indications.length > 0 || data.additionalIndications) {
+        html += `
+        <table class="layout-table">
+            <tbody>
+                <tr>
+                    <td style="width:50%;vertical-align:top;">
+                        <div class="report-box" data-kind="indications" style="width:100%;">
+                            ${sectionTitle('Indicaciones Post-Procedimiento')}
+                            ${data.indications.length > 0 ? `
+                                <ul class="report-indications-list">
+                                    ${data.indications.map(item => `<li>${escapeHtml(item)}</li>`).join('')}
+                                </ul>` : ''}
+                            ${data.additionalIndications ? `
+                                <p class="report-item" style="white-space:pre-line;margin-top:0.5rem;">
+                                    ${escapeHtml(data.additionalIndications)}
+                                </p>` : ''}
+                        </div>
+                    </td>
+                    <td style="width:50%;padding:0;margin:0;"></td>
+                </tr>
+            </tbody>
+        </table>`;
+    }
+
+    return html;
+}
+
+
+
+
+
+// ===================================================================
+// 12.1 ASISTENCIA IA LOCAL (CONSTRUCCIÓN DE CONTEXTO)
+// ===================================================================
+
+function buildAIContext(section) {
+    // Recolectar datos actuales del formulario ya mapeados en collectReportData
+    const data = collectReportData();
+
+    // Armar estructura base común
+    const base = {
+        fecha: new Date().toISOString(),
+        procedimiento: {
+            nombre: data.procedureName,
+            codigo: data.procedureCode,
+            fecha: data.procedureDate,
+            horaInicio: data.startTime,
+            horaTermino: data.endTime,
+            adicionales: data.additionalProcedures
+        },
+        paciente: {
+            comuna: data.commune,
+            prevision: data.healthInsurance,
+            procedencia: data.origin
+        },
+        diagnosticos: {
+            ingreso: data.entryDiagnosis,
+            egreso: data.exitDiagnosis
+        },
+        personal: {
+            medicos: data.mainDoctor,
+            enfermeria: data.assistantNurse,
+            tens: data.tens
+        },
+        mediciones: data.measurements,
+        indicacionesSeleccionadas: data.indications
+    };
+
+    // Especializar por sección solicitada
+    if (section === 'admission') {
+        return {
+            objetivo: 'Redactar motivo de ingreso clínicamente claro y conciso (2-4 frases).',
+            tono: 'formal, médico',
+            idioma: 'es-CL',
+            contexto: base,
+            campoObjetivo: 'admissionReason',
+            placeholders: {
+                sintomasClave: '[dolor, palpitaciones, síncope, etc.]',
+                antecedentesRelevantes: '[HTA, FA, IAM previo, etc.]'
+            }
+        };
+    }
+
+    if (section === 'procedure') {
+        return {
+            objetivo: 'Redactar descripción detallada, cronológica y precisa del procedimiento (120-200 palabras).',
+            incluir: [
+                'acceso vascular', 'tipo de catéter/electrodos', 'parámetros programados',
+                'hallazgos relevantes', 'complicaciones', 'resultado inmediato'
+            ],
+            tono: 'formal, médico',
+            idioma: 'es-CL',
+            contexto: base,
+            campoObjetivo: 'procedureDescription'
+        };
+    }
+
+    if (section === 'indications') {
+        return {
+            objetivo: 'Sugerir indicaciones post-procedimiento específicas para el caso del paciente.',
+            formato: 'viñetas cortas',
+            tono: 'claro, práctico',
+            idioma: 'es-CL',
+            contexto: base,
+            campoObjetivo: 'additionalIndications'
+        };
+    }
+
+    return { contexto: base };
+}
+
+function showAIModal(title, payload) {
+    const content = `
+        <div class="mb-3">
+            <p class="text-sm text-gray-600 mb-2">Copia este contexto y pégalo en tu asistente IA local. Puedes editarlo antes si lo necesitas.</p>
+            <textarea id="aiPayload" class="form-textarea" rows="12">${escapeHtml(JSON.stringify(payload, null, 2))}</textarea>
+        </div>
+        <div class="flex justify-end gap-2">
+            <button type="button" id="copyAIPayloadBtn" class="btn bg-purple-600 text-white hover:bg-purple-700">Copiar</button>
+        </div>
+    `;
+    const modal = createModal(title, content);
+    modal.querySelector('#copyAIPayloadBtn')?.addEventListener('click', () => {
+        const ta = modal.querySelector('#aiPayload');
+        if (!ta) return;
+        navigator.clipboard.writeText(ta.value).then(() => showNotification('Contexto copiado', 'success')).catch(() => {
+            ta.select();
+            document.execCommand('copy');
+            showNotification('Contexto copiado', 'success');
+        });
+    });
+}
+
+// Generadores locales simples (heurísticos) para asistencia inmediata sin salir de la app
+function generateAdmissionReasonSuggestion(data) {
+    const current = document.getElementById('admissionReason')?.value?.trim() || '';
+    const frases = [];
+
+    // 1) Pulir lo ya escrito por el usuario (capitalización y punto final)
+    if (current) {
+        const cleaned = current
+            .replace(/\s+/g, ' ')
+            .replace(/\s*([,;:.])\s*/g, '$1 ')
+            .replace(/\s*\.$/, '');
+        const capitalized = cleaned.charAt(0).toUpperCase() + cleaned.slice(1);
+        frases.push(capitalized + '.');
+    }
+
+    // 2) Completar con contexto mínimo si falta
+    if (data.entryDiagnosis) {
+        const diagFrase = `Ingreso por ${data.entryDiagnosis.toLowerCase()}.`;
+        if (!frases.join(' ').toLowerCase().includes(data.entryDiagnosis.toLowerCase())) {
+            frases.unshift(diagFrase);
+        }
+    }
+
+    // 3) Síntomas probables según diagnóstico
+    const sintomas = [];
+    if (data.entryDiagnosis && /fibrilación auricular|taquiarritmia/i.test(data.entryDiagnosis)) sintomas.push('palpitaciones');
+    if (data.entryDiagnosis && /bradi|bloqueo/i.test(data.entryDiagnosis)) sintomas.push('mareos o síncope');
+    if (sintomas.length && !frases.join(' ').toLowerCase().includes('palpit') && !frases.join(' ').toLowerCase().includes('síncope')) {
+        frases.push(`Refiere ${sintomas.join(' y ')}.`);
+    }
+
+    if (data.origin) {
+        const origen = `Derivado desde ${data.origin.toLowerCase()}.`;
+        if (!frases.join(' ').toLowerCase().includes(data.origin.toLowerCase())) {
+            frases.push(origen);
+        }
+    }
+
+    return frases.join(' ').replace(/\s+/g, ' ').trim();
+}
+
+function generateProcedureDescriptionSuggestion(data) {
+    const lineas = [];
+    lineas.push(`Bajo condiciones de asepsia y antisepsia, se realiza ${data.procedureName || 'procedimiento'} (${data.procedureCode || 's/código'}).`);
+    lineas.push(`Acceso vascular obtenido, se posicionan catéteres/electrodos según protocolo.`);
+    if (Array.isArray(data.measurements) && data.measurements.length > 0) {
+        const medidasConValores = data.measurements.filter(m => m.parameters?.some(p => p.value));
+        if (medidasConValores.length) {
+            const resumen = medidasConValores.map(m => `${m.name.toLowerCase()}`).slice(0, 3).join(', ');
+            lineas.push(`Se documentan mediciones en ${resumen}.`);
+        }
+    }
+    if (data.additionalProcedures?.length) {
+        const extras = data.additionalProcedures.map(p => p.name).filter(Boolean).join(', ');
+        if (extras) lineas.push(`Procedimientos adicionales: ${extras}.`);
+    }
+    lineas.push(`Procedimiento bien tolerado, sin complicaciones inmediatas. Se deja plan de control y vigilancia.`);
+    return lineas.join('\n');
+}
+
+function generateIndicationsSuggestion(data) {
+    const items = [];
+    if (data.indications?.length) items.push(...data.indications);
+
+    // Add default indications only if not already selected
+    if (!items.includes('Vigilancia de sitio de punción por 24 h')) {
+        items.push('Vigilancia de sitio de punción por 24 h');
+    }
+
+    if (/anticoag/i.test((data.entryDiagnosis||'') + ' ' + (data.exitDiagnosis||'')) && !items.includes('Revisar esquema de anticoagulación')) {
+        items.push('Revisar esquema de anticoagulación');
+    }
+
+    return items.join('\n');
+}
+
+function applyAISuggestion(fieldId, text, options) {
+    const el = document.getElementById(fieldId);
+    if (!el) return;
+    const replace = !options || options.replace !== false; // por defecto reemplaza
+    if (replace) {
+        el.value = text;
+    } else {
+        const current = (el.value || '').trim();
+        el.value = current ? (current + (current.endsWith('\n') ? '' : '\n') + text) : text;
+    }
+    el.dispatchEvent(new Event('change'));
+}
+
