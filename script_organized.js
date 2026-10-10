@@ -3064,9 +3064,17 @@ function attachMainEventListeners() {
         elements.cancelEditProcedureBtn.addEventListener('click', () => cancelEditProcedure());
     }
 
-    // Imprimir
+    // Imprimir (solo si hay un informe generado; evita imprimir una página en blanco)
     if (elements.printBtn) {
-        elements.printBtn.addEventListener('click', () => window.print());
+        elements.printBtn.addEventListener('click', () => {
+            const report = elements.generatedReport;
+            const content = elements.reportContent;
+            if (!report || report.classList.contains('hidden') || !content || !content.innerHTML.trim()) {
+                showNotification('Primero genere el informe con "Vista Previa" antes de imprimir.', 'warning');
+                return;
+            }
+            window.print();
+        });
     }
 
     // Copiar reporte
@@ -4275,6 +4283,24 @@ function closeWizardModal() {
     const modal = document.getElementById('wizardModal');
     if (modal) modal.classList.add('hidden');
 }
+
+// Solicita cerrar el asistente: pide confirmación si ya se ingresaron datos,
+// para evitar perder el trabajo de varios pasos por un clic accidental.
+async function requestCloseWizard() {
+    // Capturar los datos del paso actual antes de decidir
+    wizardState.data = { ...wizardState.data, ...collectWizardStepData(wizardState.currentStep) };
+    const hasData = wizardState.data && Object.keys(wizardState.data).length > 0;
+    if (hasData) {
+        const ok = await showConfirmDialog(
+            'Cerrar asistente',
+            'Ha ingresado datos en el asistente. Si lo cierra ahora, se perderán. ¿Desea continuar?',
+            { confirmText: 'Cerrar sin guardar', cancelText: 'Seguir editando' }
+        );
+        if (!ok) return;
+    }
+    closeWizardModal();
+}
+window.requestCloseWizard = requestCloseWizard;
 
 // ---- Helpers del asistente para listas despegables y descripción ----
 
