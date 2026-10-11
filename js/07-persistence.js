@@ -288,6 +288,14 @@ function checkBackupReminder() {
     const days = (Date.now() - lastTime) / 86400000;
     if (days < 7) return;
 
+    // No interrumpir al usuario si el asistente paso a paso está abierto:
+    // reintentar en 1 minuto.
+    const wizardModal = document.getElementById('wizardModal');
+    if (wizardModal && !wizardModal.classList.contains('hidden')) {
+        setTimeout(checkBackupReminder, 60000);
+        return;
+    }
+
     showConfirmDialog(
         'Respaldo de datos',
         'Han pasado ' + Math.floor(days) + ' días desde el último respaldo. ¿Desea guardar una copia de seguridad ahora?',

@@ -70,7 +70,14 @@ function attachMainEventListeners() {
     }
 
     if (elements.clearFormBtn) {
-        elements.clearFormBtn.addEventListener('click', () => clearForm());
+        elements.clearFormBtn.addEventListener('click', async () => {
+            const ok = await showConfirmDialog(
+                'Limpiar formulario',
+                '¿Desea limpiar el formulario? Se perderán los datos no guardados.',
+                { confirmText: 'Limpiar' }
+            );
+            if (ok) clearForm();
+        });
     }
 
     // Botones de navegación principales
