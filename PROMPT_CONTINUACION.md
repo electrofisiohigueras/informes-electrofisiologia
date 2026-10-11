@@ -86,7 +86,12 @@ Awesome 6. No agregar dependencias nuevas sin permiso del usuario.
 - Las funciones de borrado y carga son ASYNC (await showConfirmDialog):
   deleteProcedure, deleteTemplate, deleteStaff, deleteDeviceType/Brand/Model,
   deleteCommonDataItem, newReport, loadTemplate, updateProcedureCode,
-  applyWizardDataToForm, finishWizard. Conservar las cadenas de await.
+  applyWizardDataToForm, finishWizard, saveCurrentTemplate, clearFormBtn
+  handler. Conservar las cadenas de await.
+- `validateForm()` devuelve objetos { fieldId, message } (no strings):
+  generateReport usa errors.map(e => e.message) para el modal y
+  highlightFormErrors(errors) para resaltar los campos. IDs de error inline:
+  id de campo + "Error" (ej. procedureDateError).
 - Verificar sintaxis con `node --check` en cada archivo `js/` editado.
 
 ## 5. Lo que YA está resuelto (no rehacer sin motivo)
@@ -160,9 +165,14 @@ scrollbars, etc. Los diálogos nuevos (5b) reutilizan `.modal-content`.
   fecha en informe, wizard completo, diálogos de borrado, respaldo, pegado en
   Medicap tras recargar.
 - `common-data-modal.html` ELIMINADO (era obsoleto, IDs colisionables).
-- Posibles mejoras futuras (no implementar sin confirmar): accesibilidad de
-  modales (focus trap, ARIA), modo oscuro, validación inline por campo
-  (los <p class="error-message"> siguen vestigiales), ítems de TODO.md.
+- Plantillas: selector "Cargar Plantilla" de la cabecera CONECTADO (change ->
+  loadTemplate); guardar con nombre existente ofrece SOBRESCRIBIR; al cargar
+  v2.0 la fecha del procedimiento se resetea a HOY (la plantilla no viaja con
+  fecha). OJO: las plantillas capturan los VALORES de las mediciones
+  (pendiente de decisión clínica: limpiar valores al guardar o advertir).
+- Posibles mejoras futuras (no implementar sin confirmar): focus trap + ARIA
+  en modales, modo oscuro, renombrar/duplicar plantillas, vista previa de
+  plantilla antes de cargar, dots del wizard navegables.
 
 ## 7. Cómo trabajar seguro
 - `git status` / `git diff` antes y después; commit por cambio lógico.
