@@ -69,6 +69,15 @@ function attachMainEventListeners() {
         elements.previewReportBtn.addEventListener('click', () => previewReport());
     }
 
+    // Selector "Cargar Plantilla" del encabezado de Datos del Procedimiento
+    if (elements.loadTemplate) {
+        elements.loadTemplate.addEventListener('change', function() {
+            if (this.value) {
+                loadTemplate(this.value);
+            }
+        });
+    }
+
     if (elements.clearFormBtn) {
         elements.clearFormBtn.addEventListener('click', async () => {
             const ok = await showConfirmDialog(

@@ -40,11 +40,23 @@ function renderTemplatesList() {
     `).join('');
 }
 
-function saveCurrentTemplate() {
+async function saveCurrentTemplate() {
     const name = document.getElementById('templateName').value.trim();
     if (!name) {
         showNotification('Por favor, ingrese un nombre para la plantilla', 'error');
         return;
+    }
+
+    // Evitar duplicados confusos: ofrecer sobrescribir la plantilla existente
+    const existing = appState.templates.find(t => t.name.toLowerCase() === name.toLowerCase());
+    if (existing) {
+        const ok = await showConfirmDialog(
+            'Plantilla duplicada',
+            `Ya existe una plantilla llamada "${name}". ¿Desea sobrescribirla con el contenido actual?`,
+            { confirmText: 'Sobrescribir' }
+        );
+        if (!ok) return;
+        appState.templates = appState.templates.filter(t => t.id !== existing.id);
     }
 
     // Guardar estado completo del formulario
@@ -85,6 +97,9 @@ async function loadTemplate(templateId) {
     if (template.version === '2.0' && template.data) {
         // Nuevo formato - carga completa del formulario
         setFormState(template.data);
+        // La fecha del procedimiento corresponde al día real del procedimiento,
+        // no a la fecha en que se guardó la plantilla
+        if (elements.procedureDate) elements.procedureDate.value = toISODate(new Date());
         showNotification(`Plantilla "${template.name}" cargada correctamente`, 'success');
     } else if (template.formState) {
         // Compatibilidad con formato antiguo
