@@ -32,7 +32,7 @@ function renderTemplatesList() {
                 <button type="button" class="load-template-btn text-blue-500 hover:text-blue-700" data-id="${template.id}">
                     <i class="fas fa-download"></i> Cargar
                 </button>
-                <button type="button" class="delete-template-btn text-red-500 hover:text-red-700" data-id="${template.id}">
+                <button type="button" class="delete-template-btn text-red-500 hover:text-red-700" data-id="${template.id}" aria-label="Eliminar plantilla">
                     <i class="fas fa-trash"></i>
                 </button>
             </div>
@@ -153,7 +153,7 @@ function renderStaffList() {
                 <strong>${escapeHtml(person.name)}</strong>
                 <p class="text-sm text-gray-600">${escapeHtml(person.role)}</p>
             </div>
-            <button type="button" class="delete-staff-btn text-red-500 hover:text-red-700" data-id="${person.id}">
+            <button type="button" class="delete-staff-btn text-red-500 hover:text-red-700" data-id="${person.id}" aria-label="Eliminar personal">
                 <i class="fas fa-trash"></i>
             </button>
         </div>
@@ -247,7 +247,7 @@ function updateDeviceModalLists(modal) {
     typeList.innerHTML = appState.commonData.deviceTypes.map(type => `
         <div class="flex justify-between items-center py-1">
             <span>${escapeHtml(type)}</span>
-            <button type="button" class="text-red-500 modal-delete-device-type" data-value="${escapeHtml(type)}">
+            <button type="button" class="text-red-500 modal-delete-device-type" data-value="${escapeHtml(type)}" aria-label="Eliminar tipo de dispositivo">
                 <i class="fas fa-times"></i>
             </button>
         </div>
@@ -256,7 +256,7 @@ function updateDeviceModalLists(modal) {
     brandList.innerHTML = appState.commonData.deviceBrands.map(brand => `
         <div class="flex justify-between items-center py-1">
             <span>${escapeHtml(brand)}</span>
-            <button type="button" class="text-red-500 modal-delete-device-brand" data-value="${escapeHtml(brand)}">
+            <button type="button" class="text-red-500 modal-delete-device-brand" data-value="${escapeHtml(brand)}" aria-label="Eliminar marca de dispositivo">
                 <i class="fas fa-times"></i>
             </button>
         </div>
@@ -287,7 +287,7 @@ function updateDeviceModelsList(modal) {
         models.map(model => `
             <div class="flex justify-between items-center py-1">
                 <span>${escapeHtml(model)}</span>
-                <button type="button" class="text-red-500 modal-delete-device-model" data-type="${escapeHtml(type)}" data-brand="${escapeHtml(brand)}" data-model="${escapeHtml(model)}">
+                <button type="button" class="text-red-500 modal-delete-device-model" data-type="${escapeHtml(type)}" data-brand="${escapeHtml(brand)}" data-model="${escapeHtml(model)}" aria-label="Eliminar modelo de dispositivo">
                     <i class="fas fa-times"></i>
                 </button>
             </div>

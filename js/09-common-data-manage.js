@@ -142,7 +142,7 @@ function updateCommonDataList(dataType, listId, deleteClass) {
     list.innerHTML = appState.commonData[dataType].map(item => `
         <div class="flex justify-between items-center bg-white p-2 rounded shadow mb-2 hover:bg-gray-50">
             <span class="flex-grow">${escapeHtml(item)}</span>
-            <button type="button" class="text-red-500 hover:text-red-700 ml-2 ${deleteClass}" data-value="${escapeHtml(item)}" title="Eliminar">
+            <button type="button" class="text-red-500 hover:text-red-700 ml-2 ${deleteClass}" data-value="${escapeHtml(item)}" title="Eliminar" aria-label="Eliminar">
                 <i class="fas fa-trash"></i>
             </button>
         </div>

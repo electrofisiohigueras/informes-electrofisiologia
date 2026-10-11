@@ -1702,3 +1702,25 @@ body {
     border-color: var(--error) !important;
     box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.15) !important;
 }
+
+/* =================================================================== */
+/* ACCESIBILIDAD: CHECKBOXES DE PERSONAL                                */
+/* =================================================================== */
+/* Checkbox oculto visualmente pero alcanzable por teclado (sr-only) */
+.staff-checkbox {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    margin: -1px;
+    padding: 0;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+    border: 0;
+}
+
+/* Anillo de foco visible cuando el checkbox oculto recibe foco por teclado */
+.staff-selection-container:focus-within .staff-selection-box {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+}

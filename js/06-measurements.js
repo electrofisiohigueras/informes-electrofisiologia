@@ -171,7 +171,7 @@ function renderMeasurements() {
                     <div class="flex items-center justify-between gap-2 mb-1">
                         ${parameterNameField}
                         <button type="button" class="remove-parameter-btn text-red-400 hover:text-red-600 text-xs p-1 flex-shrink-0" 
-                                data-measurement-id="${measurement.id}" data-param-index="${index}" title="Eliminar parámetro">
+                                data-measurement-id="${measurement.id}" data-param-index="${index}" title="Eliminar parámetro" aria-label="Eliminar parámetro">
                             <i class="fas fa-times"></i>
                         </button>
                     </div>

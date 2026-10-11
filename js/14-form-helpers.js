@@ -231,7 +231,9 @@ function createStaffCheckbox(person, role) {
     checkbox.id = `${role}-${person.id}`;
     checkbox.name = role;
     checkbox.value = person.name;
-    checkbox.className = 'hidden staff-checkbox';
+    // sr-only (estilo en style.css): oculto visualmente pero operable por teclado
+    checkbox.className = 'staff-checkbox';
+    checkbox.setAttribute('aria-label', person.name);
 
     const selectionBox = document.createElement('div');
     selectionBox.className = 'staff-selection-box p-3 rounded cursor-pointer transition-all duration-200 bg-white hover:bg-gray-50 border border-gray-200';

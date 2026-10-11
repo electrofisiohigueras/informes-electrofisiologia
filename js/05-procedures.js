@@ -171,10 +171,10 @@ function renderProcedures() {
                     ${procedure.description ? `<p class="text-sm text-gray-500 mt-1">${escapeHtml(procedure.description)}</p>` : ''}
                 </div>
                 <div class="flex gap-2 ml-4">
-                    <button type="button" class="text-blue-500 hover:text-blue-700 edit-procedure" data-id="${procedure.id}">
+                    <button type="button" class="text-blue-500 hover:text-blue-700 edit-procedure" data-id="${procedure.id}" aria-label="Editar procedimiento">
                         <i class="fas fa-edit"></i>
                     </button>
-                    <button type="button" class="text-red-500 hover:text-red-700 delete-procedure" data-id="${procedure.id}">
+                    <button type="button" class="text-red-500 hover:text-red-700 delete-procedure" data-id="${procedure.id}" aria-label="Eliminar procedimiento">
                         <i class="fas fa-trash"></i>
                     </button>
                 </div>
