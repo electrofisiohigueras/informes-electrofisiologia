@@ -32,6 +32,7 @@ function clearForm() {
         setDefaultTimes();
         appState.formChanged = false;
 
+        clearFormErrorHighlights();
         showNotification('Formulario limpiado correctamente', 'success');
     } catch (error) {
         console.error('Error clearing form:', error);

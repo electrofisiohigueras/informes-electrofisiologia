@@ -218,5 +218,15 @@ function attachMainEventListeners() {
             appState.formChanged = true;
         });
     });
+
+    // Quitar el resaltado de error en cuanto el usuario corrige el campo
+    document.addEventListener('input', (e) => {
+        const el = e.target;
+        if (el.classList && el.classList.contains('input-error')) {
+            el.classList.remove('input-error');
+            const msg = document.getElementById(el.id + 'Error');
+            if (msg) msg.classList.add('hidden');
+        }
+    });
 }
 

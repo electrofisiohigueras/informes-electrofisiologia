@@ -3,42 +3,87 @@
 // ===================================================================
 
 // Funciones implementadas completamente
+// Cada error es { fieldId, message }: fieldId permite resaltarlo en el formulario.
 function validateForm() {
     const errors = [];
     
     if (!elements.procedureNameSelect?.value && !elements.customProcedureInput?.value) {
-        errors.push('Nombre del procedimiento es obligatorio');
+        errors.push({ fieldId: 'procedureName', message: 'Nombre del procedimiento es obligatorio' });
     }
     
     if (!elements.procedureCodeInput?.value) {
-        errors.push('Código del procedimiento es obligatorio');
+        errors.push({ fieldId: 'procedureCode', message: 'Código del procedimiento es obligatorio' });
     }
     
     if (!elements.procedureDate?.value) {
-        errors.push('La fecha del procedimiento es obligatoria');
+        errors.push({ fieldId: 'procedureDate', message: 'La fecha del procedimiento es obligatoria' });
     }
     
     if (!elements.startTime?.value) {
-        errors.push('Hora de inicio es obligatoria');
+        errors.push({ fieldId: 'startTime', message: 'Hora de inicio es obligatoria' });
     }
     
     if (!elements.endTime?.value) {
-        errors.push('Hora de término es obligatoria');
+        errors.push({ fieldId: 'endTime', message: 'Hora de término es obligatoria' });
     }
     
     if (!elements.commune?.value) {
-        errors.push('Comuna de procedencia es obligatoria');
+        errors.push({ fieldId: 'commune', message: 'Comuna de procedencia es obligatoria' });
     }
     
     if (!elements.healthInsurance?.value) {
-        errors.push('Previsión de salud es obligatoria');
+        errors.push({ fieldId: 'healthInsurance', message: 'Previsión de salud es obligatoria' });
     }
     
     if (!elements.origin?.value) {
-        errors.push('Procedencia es obligatoria');
+        errors.push({ fieldId: 'origin', message: 'Procedencia es obligatoria' });
     }
     
     return errors;
+}
+
+// Resalta en el formulario los campos con error: borde rojo, mensaje inline bajo
+// el campo, activación de la pestaña contenedora y scroll al primero.
+function highlightFormErrors(errors) {
+    clearFormErrorHighlights();
+    if (!errors || errors.length === 0) return;
+
+    // Pestaña que contiene cada campo que vive dentro de las pestañas
+    const TAB_OF_FIELD = {
+        commune: 'patient-data',
+        healthInsurance: 'patient-data',
+        origin: 'patient-data'
+    };
+
+    let firstElement = null;
+    errors.forEach(err => {
+        const el = document.getElementById(err.fieldId);
+        if (!el) return;
+        el.classList.add('input-error');
+        const msg = document.getElementById(err.fieldId + 'Error');
+        if (msg) msg.classList.remove('hidden');
+        if (!firstElement) firstElement = el;
+
+        const tabId = TAB_OF_FIELD[err.fieldId];
+        if (tabId) {
+            const tabBtn = document.querySelector(`.tab-btn[data-tab="${tabId}"]`);
+            if (tabBtn && !tabBtn.classList.contains('active')) tabBtn.click();
+        }
+    });
+
+    if (firstElement) {
+        // Esperar a que la pestaña correspondiente se muestre antes de desplazar
+        setTimeout(() => {
+            firstElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            try { firstElement.focus({ preventScroll: true }); } catch (e) { /* algunos campos no aceptan focus */ }
+        }, 150);
+    }
+}
+
+// Elimina todos los resaltados de validación del formulario.
+function clearFormErrorHighlights() {
+    document.querySelectorAll('.input-error').forEach(el => el.classList.remove('input-error'));
+    document.querySelectorAll('.error-message').forEach(el => el.classList.add('hidden'));
 }
 
 function previewReport() {
@@ -48,9 +93,12 @@ function previewReport() {
 function generateReport() {
     const errors = validateForm();
     if (errors.length > 0) {
-        showValidationErrors(errors);
+        showValidationErrors(errors.map(e => e.message));
+        highlightFormErrors(errors);
         return;
     }
+    
+    clearFormErrorHighlights();
     
     // Advertencia no bloqueante: los procedimientos pueden cruzar la medianoche
     if (elements.startTime?.value && elements.endTime?.value && elements.endTime.value < elements.startTime.value) {
