@@ -88,6 +88,10 @@ Awesome 6. No agregar dependencias nuevas sin permiso del usuario.
   deleteCommonDataItem, newReport, loadTemplate, updateProcedureCode,
   applyWizardDataToForm, finishWizard, saveCurrentTemplate, clearFormBtn
   handler. Conservar las cadenas de await.
+- PROHIBIDO `document.querySelector('.modal')`: el primer `.modal` del DOM es
+  #wizardModal y su padre es <body> (destruía la página al cargar plantillas).
+  Para el modal activo de createModal usar `getActiveAppModal()`; para cerrar
+  un modal concreto usar `elemento.closest('[data-app-modal]')`.
 - `validateForm()` devuelve objetos { fieldId, message } (no strings):
   generateReport usa errors.map(e => e.message) para el modal y
   highlightFormErrors(errors) para resaltar los campos. IDs de error inline:
@@ -156,6 +160,28 @@ Verificado: pega con formato y colores en Medicap y Google Docs.
 `style.css` mantiene los bloques "MEJORAS DE DISEÑO VISUAL - UI/UX" (PASE 1)
 y "MEJORAS DE DISEÑO UI/UX - PASE 2": modales overlay, `.app-header` gradiente,
 scrollbars, etc. Los diálogos nuevos (5b) reutilizan `.modal-content`.
+
+### 5g. Flujos con modales (última ronda)
+- **Plantillas**: botón visible `manageTemplatesBtn` junto al selector
+  `loadTemplate` (ambos conectados). El selector del encabezado y el botón
+  "Cargar" del modal llaman a `loadTemplate(id)`; el modal se cierra con
+  `closest('[data-app-modal]')`.
+- **Vista previa**: "Vista Previa" genera el informe en #reportContent (fuente
+  de verdad para Copiar/Imprimir) y lo MUESTRA en `openReportPreviewModal()`
+  (modal con Cerrar/Imprimir/Copiar). `copyFormattedReport(btnEl)` acepta el
+  botón para el feedback (toolbar pasa `this`; el modal pasa su botón).
+- **Mediciones**: editor en `#measurementsModal` (IDs internos intactos:
+  measurementsContainer/measurementsList/addCustomMeasurement). El checkbox
+  `addMeasurements` controla inclusión en el informe; `setMeasurementsIncluded(bool)`
+  cambia el estado SIN abrir el editor (restauraciones); `toggleMeasurements()`
+  (checkbox) abre el editor al marcar. `updateMeasurementsSummary()` escribe el
+  aviso `#measurementsSummary` ("No incluidas" / "sin valores" / "✔ N parámetros").
+  El botón global muerto `#addParameterToMeasurement` fue eliminado (cada
+  tarjeta tiene su propio "Agregar parámetro").
+- **Impresión**: el CSS print usa `body > *:not(.container)` +
+  `.container > *:not(main)` + `main > *:not(#generatedReport)`; NO volver a
+  `body > * { display:none }` (oculta el ancestro del informe → página en
+  blanco).
 
 ## 6. Estado actual / pendientes conocidos
 - Copiar con formato: RESUELTO y verificado.
