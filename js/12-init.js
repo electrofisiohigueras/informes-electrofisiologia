@@ -70,6 +70,12 @@ function attachMainEventListeners() {
     }
 
     // Selector "Cargar Plantilla" del encabezado de Datos del Procedimiento
+    // Botón visible de gestión de plantillas (junto al selector de carga)
+    const manageTemplatesBtn = document.getElementById('manageTemplatesBtn');
+    if (manageTemplatesBtn) {
+        manageTemplatesBtn.addEventListener('click', () => showTemplatesModal());
+    }
+
     if (elements.loadTemplate) {
         elements.loadTemplate.addEventListener('change', function() {
             if (this.value) {

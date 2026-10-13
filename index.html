@@ -242,9 +242,14 @@
                 <div class="procedure-section fade-in">
                     <div class="procedure-header">
                         <h2 class="text-xl font-semibold text-gray-800">Datos del Procedimiento</h2>
-                        <select id="loadTemplate" class="procedure-select bg-green-100">
-                            <option value="">Cargar Plantilla</option>
-                        </select>
+                        <div class="flex flex-wrap items-center gap-2">
+                            <select id="loadTemplate" class="procedure-select bg-green-100">
+                                <option value="">Cargar Plantilla</option>
+                            </select>
+                            <button type="button" id="manageTemplatesBtn" class="btn btn-secondary text-sm" title="Guardar el formulario actual como plantilla o administrar las existentes">
+                                <i class="fas fa-layer-group mr-1"></i> Plantillas
+                            </button>
+                        </div>
                     </div>
                     
                     <div class="procedure-grid">

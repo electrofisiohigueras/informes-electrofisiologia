@@ -126,8 +126,14 @@ async function loadTemplate(templateId) {
         showNotification('Plantilla cargada correctamente', 'success');
     }
 
-    const modal = document.querySelector('.modal');
-    if (modal && modal.parentElement) modal.parentElement.remove();
+    // Cerrar el modal de gestión de plantillas si está abierto.
+    // (Antes se usaba querySelector('.modal'), que tomaba #wizardModal y
+    // terminaba eliminando <body> completo: la app quedaba en blanco.)
+    const templatesListEl = document.getElementById('templatesList');
+    if (templatesListEl) {
+        const overlay = templatesListEl.closest('[data-app-modal]');
+        if (overlay) overlay.remove();
+    }
     if (elements.loadTemplate) elements.loadTemplate.value = '';
 }
 
@@ -395,7 +401,7 @@ async function deleteDeviceType(value) {
         delete appState.commonData.deviceModelsByTypeAndBrand[value];
     }
     saveAllData();
-    const modal = document.querySelector('.modal');
+    const modal = getActiveAppModal();
     if (modal) {
         updateDeviceModalLists(modal);
         updateDeviceModelsList(modal);
@@ -416,7 +422,7 @@ async function deleteDeviceBrand(value) {
         }
     }
     saveAllData();
-    const modal = document.querySelector('.modal');
+    const modal = getActiveAppModal();
     if (modal) {
         updateDeviceModalLists(modal);
         updateDeviceModelsList(modal);
@@ -433,7 +439,7 @@ async function deleteDeviceModel(type, brand, model) {
     if (appState.commonData.deviceModelsByTypeAndBrand?.[type]?.[brand]) {
         appState.commonData.deviceModelsByTypeAndBrand[type][brand] = appState.commonData.deviceModelsByTypeAndBrand[type][brand].filter(item => item !== model);
         saveAllData();
-        const modal = document.querySelector('.modal');
+        const modal = getActiveAppModal();
         if (modal) updateDeviceModelsList(modal);
     }
 }

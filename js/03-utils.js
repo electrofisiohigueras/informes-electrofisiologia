@@ -35,6 +35,8 @@ function formatDateEsCL(dateStr) {
 function createModal(title, content) {
     const modalOverlay = document.createElement('div');
     modalOverlay.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50';
+    // Marca para poder localizar el modal activo con getActiveAppModal()
+    modalOverlay.dataset.appModal = 'true';
     
     const modal = document.createElement('div');
     modal.className = 'modal bg-white rounded-lg shadow-xl w-11/12 md:w-3/4 lg:w-1/2 max-h-screen overflow-y-auto';
@@ -67,6 +69,14 @@ function createModal(title, content) {
     });
     
     return modal;
+}
+
+// Devuelve el último modal abierto con createModal (o null si no hay ninguno).
+// OJO: NO usar document.querySelector('.modal'): el primer elemento .modal
+// del DOM es #wizardModal, cuyo padre es <body>; operar sobre él destruye la página.
+function getActiveAppModal() {
+    const overlays = document.querySelectorAll('[data-app-modal]');
+    return overlays.length > 0 ? overlays[overlays.length - 1] : null;
 }
 
 // ===================================================================
