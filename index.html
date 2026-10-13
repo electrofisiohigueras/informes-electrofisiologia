@@ -428,23 +428,11 @@
                                 <input type="checkbox" id="addMeasurements" class="rounded w-5 h-5 text-blue-600 focus:ring-blue-500">
                                 <span class="form-label mb-0 text-lg font-medium text-gray-700">Incluir mediciones</span>
                             </label>
-                        </div>
-                        
-                        <div id="measurementsContainer" class="hidden mt-6">
-                            <div class="bg-gradient-to-r from-blue-50 to-white p-6 rounded-xl border border-blue-100 mb-6">
-                                <h4 class="font-semibold text-xl text-gray-800 mb-2">Mediciones</h4>
-                                <p class="text-gray-600 text-sm mb-4">Agregue y configure las mediciones necesarias para el procedimiento</p>
-                            </div>
-                            <div id="measurementsList" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-                                <!-- Las mediciones se renderizan aquí dinámicamente -->
-                            </div>
-                            <div class="flex gap-4 mt-6 justify-end">
-                                <button type="button" id="addCustomMeasurement" class="btn bg-green-600 text-white hover:bg-green-700">
-                                    <i class="fas fa-plus mr-1"></i> Agregar medición
+                            <div class="flex flex-wrap items-center gap-3 mt-3">
+                                <button type="button" id="openMeasurementsModalBtn" class="btn bg-blue-600 text-white hover:bg-blue-700" title="Abrir el editor de mediciones">
+                                    <i class="fas fa-ruler-combined mr-1"></i> Editar mediciones
                                 </button>
-                                <button type="button" id="addParameterToMeasurement" class="btn bg-blue-600 text-white hover:bg-blue-700">
-                                    <i class="fas fa-plus-circle mr-1"></i> Agregar parámetro
-                                </button>
+                                <span id="measurementsSummary" class="text-sm text-gray-400">No incluidas en el informe.</span>
                             </div>
                         </div>
                     </div>
@@ -490,6 +478,34 @@
         </main>
     </div>
     
+    <!-- Modal Mediciones -->
+    <div id="measurementsModal" class="modal hidden">
+        <div class="modal-content" style="max-width:64rem;">
+            <div class="modal-header">
+                <h2>Mediciones del Procedimiento</h2>
+                <button type="button" class="modal-close-btn" onclick="closeMeasurementsModal()" aria-label="Cerrar mediciones">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div id="measurementsContainer">
+                    <div id="measurementsList" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+                        <!-- Las mediciones se renderizan aquí dinámicamente -->
+                    </div>
+                    <div class="flex gap-4 mt-6 justify-end">
+                        <button type="button" id="addCustomMeasurement" class="btn bg-green-600 text-white hover:bg-green-700">
+                            <i class="fas fa-plus mr-1"></i> Agregar medición
+                        </button>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <span class="text-sm text-gray-500 mr-auto">Los valores quedan guardados al cerrar.</span>
+                <button type="button" class="btn btn-primary" onclick="closeMeasurementsModal()">
+                    <i class="fas fa-check mr-1"></i> Listo
+                </button>
+            </div>
+        </div>
+    </div>
+
     <!-- Modal Wizard - Asistente Paso a Paso -->
     <div id="wizardModal" class="modal hidden">
         <div class="modal-content wizard-modal-content">

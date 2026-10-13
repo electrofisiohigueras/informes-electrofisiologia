@@ -172,9 +172,11 @@ function setFormState(formState) {
         
         if (formState.addMeasurements && elements.addMeasurementsCheckbox) {
             elements.addMeasurementsCheckbox.checked = true;
-            if (elements.measurementsContainer) elements.measurementsContainer.classList.remove('hidden');
             if (formState.measurements) appState.measurements = formState.measurements;
-            renderMeasurements();
+            setMeasurementsIncluded(true);
+        } else if (elements.addMeasurementsCheckbox) {
+            elements.addMeasurementsCheckbox.checked = false;
+            setMeasurementsIncluded(false);
         }
         
         const tabButton = document.querySelector(`.tab-btn[data-tab="${formState.activeTab}"]`);

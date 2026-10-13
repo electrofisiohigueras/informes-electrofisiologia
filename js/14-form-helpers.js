@@ -23,8 +23,8 @@ function clearForm() {
         if (elements.addProcedureBtn) elements.addProcedureBtn.classList.remove('hidden');
 
         appState.measurements = [...defaultMeasurements];
-        if (elements.measurementsContainer) elements.measurementsContainer.classList.add('hidden');
         if (elements.addMeasurementsCheckbox) elements.addMeasurementsCheckbox.checked = false;
+        closeMeasurementsModal();
 
         if (elements.generatedReport) elements.generatedReport.classList.add('hidden');
 

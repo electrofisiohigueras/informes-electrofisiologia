@@ -1491,7 +1491,8 @@ body {
 /* =================================================================== */
 
 /* ---- Modales estáticos: overlay centrado con backdrop ---- */
-#wizardModal {
+#wizardModal,
+#measurementsModal {
     position: fixed;
     inset: 0;
     z-index: 2000;
@@ -1672,7 +1673,8 @@ body {
 
 /* ---- Responsive de modales ---- */
 @media (max-width: 640px) {
-    #wizardModal {
+    #wizardModal,
+    #measurementsModal {
         padding: 0.5rem;
     }
 

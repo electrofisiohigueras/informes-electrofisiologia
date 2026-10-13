@@ -161,6 +161,20 @@ function attachMainEventListeners() {
         elements.addCustomMeasurementBtn.addEventListener('click', () => addCustomMeasurement());
     }
 
+    // Botón que abre el editor de mediciones en modal
+    const openMeasBtn = document.getElementById('openMeasurementsModalBtn');
+    if (openMeasBtn) {
+        openMeasBtn.addEventListener('click', () => {
+            if (elements.addMeasurementsCheckbox && !elements.addMeasurementsCheckbox.checked) {
+                // Marcar "Incluir mediciones" (el change abre el editor)
+                elements.addMeasurementsCheckbox.checked = true;
+                elements.addMeasurementsCheckbox.dispatchEvent(new Event('change'));
+            } else {
+                openMeasurementsModal();
+            }
+        });
+    }
+
     // Dropdown functionality
     if (elements.dropdownBtn) {
         elements.dropdownBtn.addEventListener('click', function(e) {

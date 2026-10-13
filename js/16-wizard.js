@@ -458,10 +458,10 @@ async function applyWizardDataToForm() {
     // Mediciones
     if (d.addMeasurements && elements.addMeasurementsCheckbox) {
         elements.addMeasurementsCheckbox.checked = true;
-        toggleMeasurements();
+        setMeasurementsIncluded(true);
     } else if (elements.addMeasurementsCheckbox) {
         elements.addMeasurementsCheckbox.checked = false;
-        toggleMeasurements();
+        setMeasurementsIncluded(false);
     }
     // Aplicar valores de mediciones y parámetros personalizados del asistente
     if (d.addMeasurements) {

@@ -270,14 +270,88 @@ function renderMeasurements() {
     attachMeasurementEventListeners();
 }
 
-function toggleMeasurements() {
-    if (!elements.addMeasurementsCheckbox || !elements.measurementsContainer) return;
-
-    if (elements.addMeasurementsCheckbox.checked) {
-        elements.measurementsContainer.classList.remove('hidden');
+// Marca la inclusión de mediciones en el informe SIN abrir el editor.
+// Se usa al restaurar estado (autosave, plantillas, asistente).
+function setMeasurementsIncluded(included) {
+    if (elements.addMeasurementsCheckbox) elements.addMeasurementsCheckbox.checked = included;
+    if (included) {
         renderMeasurements();
+        if (elements.measurementsContainer) elements.measurementsContainer.classList.remove('hidden');
     } else {
-        elements.measurementsContainer.classList.add('hidden');
+        closeMeasurementsModal();
     }
+    updateMeasurementsSummary();
 }
+
+// Handler del checkbox "Incluir mediciones": abre el editor al marcarlo.
+function toggleMeasurements() {
+    const included = elements.addMeasurementsCheckbox?.checked || false;
+    setMeasurementsIncluded(included);
+    if (included) openMeasurementsModal();
+}
+
+// Abre el modal del editor de mediciones.
+function openMeasurementsModal() {
+    const modal = document.getElementById('measurementsModal');
+    if (!modal) return;
+    renderMeasurements();
+    updateMeasurementsSummary();
+    modal.classList.remove('hidden');
+}
+
+// Cierra el modal del editor de mediciones.
+function closeMeasurementsModal() {
+    const modal = document.getElementById('measurementsModal');
+    if (modal) modal.classList.add('hidden');
+    updateMeasurementsSummary();
+}
+window.closeMeasurementsModal = closeMeasurementsModal;
+
+// Aviso permanente del estado de las mediciones junto al botón del editor:
+// indica cuántas mediciones y parámetros tienen valores listos para el informe.
+function updateMeasurementsSummary() {
+    const el = document.getElementById('measurementsSummary');
+    if (!el) return;
+
+    if (!elements.addMeasurementsCheckbox?.checked) {
+        el.textContent = 'No incluidas en el informe.';
+        el.className = 'text-sm text-gray-400';
+        return;
+    }
+
+    let secciones = 0;
+    let parametros = 0;
+    appState.measurements.forEach(m => {
+        const conValor = (m.parameters || []).filter(p => p.value);
+        if (conValor.length > 0) {
+            secciones++;
+            parametros += conValor.length;
+        }
+    });
+    const personalizados = appState.customParameters.filter(p => p.value).length;
+
+    if (parametros === 0 && personalizados === 0) {
+        el.textContent = 'Incluidas, pero aún sin valores ingresados.';
+        el.className = 'text-sm text-yellow-600';
+        return;
+    }
+
+    const partes = [];
+    if (parametros > 0) {
+        partes.push(parametros + (parametros === 1 ? ' parámetro con valor' : ' parámetros con valor') +
+            ' en ' + secciones + (secciones === 1 ? ' medición' : ' mediciones'));
+    }
+    if (personalizados > 0) {
+        partes.push(personalizados + (personalizados === 1 ? ' parámetro personalizado' : ' parámetros personalizados'));
+    }
+    el.textContent = '✔ ' + partes.join(' y ') + '.';
+    el.className = 'text-sm text-green-600 font-medium';
+}
+
+// Mantener el resumen sincronizado ante cualquier cambio dentro del editor
+document.addEventListener('change', (e) => {
+    if (e.target && e.target.closest && e.target.closest('#measurementsList')) {
+        updateMeasurementsSummary();
+    }
+});
 
