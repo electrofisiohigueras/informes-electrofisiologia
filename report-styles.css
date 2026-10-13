@@ -455,12 +455,19 @@ div, p, table, tr, td {
         width: 100%;
     }
 
-    body > * {
+    /* Ocultar todo excepto la ruta hasta #generatedReport.
+       OJO: no usar "body > * { display:none }": oculta el .container
+       (ancestro del informe) y la impresión sale en blanco. */
+    body > *:not(.container) {
         display: none !important;
     }
 
-    body > div > main #generatedReport {
-        display: block !important;
+    .container > *:not(main) {
+        display: none !important;
+    }
+
+    main > *:not(#generatedReport) {
+        display: none !important;
     }
 
     #generatedReport {

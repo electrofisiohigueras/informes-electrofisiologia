@@ -8,7 +8,7 @@
  *   - text/html: HTML con TODOS los estilos inline (colores, tablas, negritas, etc.)
  *   - text/plain: texto plano como respaldo para editores básicos.
  */
-async function copyFormattedReport() {
+async function copyFormattedReport(btnEl) {
     const reportContent = elements.reportContent;
     if (!reportContent) {
         showNotification('No hay contenido en el informe para copiar.', 'error');
@@ -55,7 +55,7 @@ async function copyFormattedReport() {
                 await navigator.clipboard.write([item]);
                 console.log('[Copiar Informe] Ruta: ClipboardItem (HTML + texto plano) | HTML bytes:', styledHtml.length);
                 window.__lastCopiedHtml = styledHtml;
-                showCopyFeedback('Copiado (HTML moderno)');
+                showCopyFeedback('Copiado (HTML moderno)', btnEl);
                 return;
             } catch (clipboardErr) {
                 console.warn('ClipboardItem no disponible o denegado, usando respaldo:', clipboardErr);
@@ -67,7 +67,7 @@ async function copyFormattedReport() {
         fallbackCopyHtml(styledHtml);
         console.log('[Copiar Informe] Ruta: execCommand fallback | HTML bytes:', styledHtml.length);
         window.__lastCopiedHtml = styledHtml;
-        showCopyFeedback('Copiado (respaldo execCommand)');
+        showCopyFeedback('Copiado (respaldo execCommand)', btnEl);
 
     } catch (error) {
         console.error('Error al copiar el informe:', error);

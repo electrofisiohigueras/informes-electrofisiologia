@@ -112,13 +112,72 @@ function generateReport() {
         if (elements.reportContent && elements.generatedReport) {
             elements.reportContent.innerHTML = reportHtml;
             elements.generatedReport.classList.remove('hidden');
-            elements.generatedReport.scrollIntoView({ behavior: 'smooth' });
         }
+
+        // Vista previa en modal: no obliga a desplazarse por la página.
+        // La fuente de verdad sigue siendo #reportContent (dentro de
+        // #generatedReport), sobre la que operan Copiar e Imprimir.
+        openReportPreviewModal(reportHtml);
     } catch (error) {
         console.error('Error generating report:', error);
         showNotification('Error al generar el reporte', 'error');
     }
 }
+
+// Muestra el informe en un modal de vista previa con acciones de
+// Cerrar, Imprimir y Copiar Informe. El HTML mostrado es el mismo que
+// queda en #reportContent, por lo que el pipeline de copiado no cambia.
+function openReportPreviewModal(reportHtml) {
+    // Cerrar una vista previa anterior si existe
+    const prev = document.querySelector('.report-preview-overlay');
+    if (prev) prev.remove();
+
+    const overlay = document.createElement('div');
+    overlay.className = 'report-preview-overlay';
+    overlay.style.cssText = 'position:fixed;inset:0;z-index:3000;display:flex;align-items:center;justify-content:center;padding:1rem;background:rgba(15, 23, 42, 0.5);';
+
+    const modal = document.createElement('div');
+    modal.className = 'modal-content';
+    modal.style.maxWidth = '64rem';
+    modal.innerHTML = `
+        <div class="modal-header">
+            <h2>Vista Previa del Informe</h2>
+        </div>
+        <div class="modal-body report-preview-body"></div>
+        <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-role="close">Cerrar</button>
+            <button type="button" class="btn btn-secondary" data-role="print"><i class="fas fa-print mr-1"></i> Imprimir</button>
+            <button type="button" class="btn text-white shadow-lg" data-role="copy" style="background: linear-gradient(135deg, #f59e0b, #ea580c);">
+                <i class="fas fa-paint-brush mr-1"></i> Copiar Informe
+            </button>
+        </div>
+    `;
+
+    overlay.appendChild(modal);
+    document.body.appendChild(overlay);
+
+    modal.querySelector('.report-preview-body').innerHTML = reportHtml;
+
+    const close = () => {
+        document.removeEventListener('keydown', handleKey);
+        overlay.remove();
+    };
+    const handleKey = (e) => {
+        if (e.key === 'Escape') close();
+    };
+
+    modal.querySelector('[data-role="close"]').addEventListener('click', close);
+    overlay.addEventListener('click', (e) => {
+        if (e.target === overlay) close();
+    });
+    document.addEventListener('keydown', handleKey);
+
+    modal.querySelector('[data-role="print"]').addEventListener('click', () => window.print());
+
+    const copyBtn = modal.querySelector('[data-role="copy"]');
+    copyBtn.addEventListener('click', () => copyFormattedReport(copyBtn));
+}
+window.openReportPreviewModal = openReportPreviewModal;
 
 // Genera el informe sin la validación estricta del formulario principal.
 // Se usa al terminar el asistente, que ya validó sus pasos obligatorios

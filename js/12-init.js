@@ -142,7 +142,7 @@ function attachMainEventListeners() {
     if (elements.copyFormattedReportBtn) {
         elements.copyFormattedReportBtn.addEventListener('click', function(e) {
             e.preventDefault();
-            copyFormattedReport();
+            copyFormattedReport(this);
         });
     } else {
         console.warn('copyFormattedReportBtn: elemento NO encontrado en el DOM');
