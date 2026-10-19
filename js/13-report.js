@@ -189,8 +189,9 @@ function renderReportSilently() {
         if (elements.reportContent && elements.generatedReport) {
             elements.reportContent.innerHTML = reportHtml;
             elements.generatedReport.classList.remove('hidden');
-            elements.generatedReport.scrollIntoView({ behavior: 'smooth' });
         }
+        // Mismo destino que el botón "Vista Previa": modal con Copiar/Imprimir
+        openReportPreviewModal(reportHtml);
     } catch (error) {
         console.error('Error generating report:', error);
         showNotification('No se pudo generar el informe. Revise los datos en el formulario principal.', 'error');
@@ -255,36 +256,59 @@ function generateReportHtml(data) {
     const procedureBox = `
         <div class="report-box" data-kind="procedure" style="width:100%;">
             ${sectionTitle('Datos del Procedimiento')}
-            <table class="report-table report-data-table" style="font-size:14px;line-height:1.6;">
+            <table class="report-table report-data-table">
                 <tbody>
                     <tr class="report-data-header-row">
-                        <th style="font-size:14px;">Nombre</th>
-                        <th style="font-size:14px;">Código</th>
-                        <th style="font-size:14px;">Fecha</th>
-                        <th style="font-size:14px;">Hora de Inicio</th>
-                        <th style="font-size:14px;">Hora de Término</th>
+                        <th>Nombre</th>
+                        <th>Código</th>
+                        <th>Fecha</th>
+                        <th>Hora de Inicio</th>
+                        <th>Hora de Término</th>
                     </tr>
                     <tr>
-                        <td style="font-size:14px;">${escapeHtml(data.procedureName)}</td>
-                        <td style="font-size:14px;">${escapeHtml(data.procedureCode)}</td>
-                        <td style="font-size:14px;">${currentDate}</td>
-                        <td style="font-size:14px;">${data.startTime || '—'}</td>
-                        <td style="font-size:14px;">${data.endTime || '—'}</td>
+                        <td>${escapeHtml(data.procedureName)}</td>
+                        <td>${escapeHtml(data.procedureCode)}</td>
+                        <td>${currentDate}</td>
+                        <td>${data.startTime || '—'}</td>
+                        <td>${data.endTime || '—'}</td>
                     </tr>
                     <tr class="report-data-header-row">
-                        <th style="font-size:14px;">Comuna</th>
-                        <th style="font-size:14px;">Previsión</th>
-                        <th colspan="3" style="font-size:14px;">Procedencia</th>
+                        <th>Comuna</th>
+                        <th>Previsión</th>
+                        <th colspan="3">Procedencia</th>
                     </tr>
                     <tr>
-                        <td style="font-size:14px;">${escapeHtml(data.commune) || '—'}</td>
-                        <td style="font-size:14px;">${escapeHtml(data.healthInsurance) || '—'}</td>
-                        <td colspan="3" style="font-size:14px;">${escapeHtml(data.origin) || '—'}</td>
+                        <td>${escapeHtml(data.commune) || '—'}</td>
+                        <td>${escapeHtml(data.healthInsurance) || '—'}</td>
+                        <td colspan="3">${escapeHtml(data.origin) || '—'}</td>
                     </tr>
                 </tbody>
             </table>
         </div>
     `;
+
+    // Datos del Procedimiento y Descripción: lado a lado (media página cada uno)
+    // si hay descripción; si no, Datos del Procedimiento ocupa el ancho completo.
+    if (data.procedureDescription) {
+        html += `
+        <table class="layout-table">
+            <tbody>
+                <tr>
+                    <td style="width:50%;vertical-align:top;padding-right:6px;">
+                        ${procedureBox}
+                    </td>
+                    <td style="width:50%;vertical-align:top;padding-left:6px;">
+                        <div class="report-box" data-kind="description" style="width:100%;">
+                            ${sectionTitle('Descripción del Procedimiento')}
+                            <p class="report-item" style="white-space:pre-line;">${escapeHtml(data.procedureDescription)}</p>
+                        </div>
+                    </td>
+                </tr>
+            </tbody>
+        </table>`;
+    } else {
+        html += procedureBox;
+    }
 
     // Diagnósticos y Personal Médico: dos recuadros lado a lado (media página cada uno)
     html += `
@@ -341,29 +365,6 @@ function generateReportHtml(data) {
             </tr>
         </tbody>
     </table>`;
-
-    // Datos del Procedimiento y Descripción: lado a lado (media página cada uno)
-    // si hay descripción; si no, Datos del Procedimiento ocupa el ancho completo.
-    if (data.procedureDescription) {
-        html += `
-        <table class="layout-table">
-            <tbody>
-                <tr>
-                    <td style="width:50%;vertical-align:top;padding-right:6px;">
-                        ${procedureBox}
-                    </td>
-                    <td style="width:50%;vertical-align:top;padding-left:6px;">
-                        <div class="report-box" data-kind="description" style="width:100%;">
-                            ${sectionTitle('Descripción del Procedimiento')}
-                            <p class="report-item" style="white-space:pre-line;">${escapeHtml(data.procedureDescription)}</p>
-                        </div>
-                    </td>
-                </tr>
-            </tbody>
-        </table>`;
-    } else {
-        html += procedureBox;
-    }
 
     // Prestaciones Adicionales y Mediciones: lado a lado (media página cada una)
 

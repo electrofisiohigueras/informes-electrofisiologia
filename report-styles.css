@@ -285,14 +285,10 @@
     color: var(--report-text-color);
 }
 
-#reportContent .report-box[data-kind="procedure"] .report-table,
-#reportContent .report-box[data-kind="procedure"] .report-table th,
-#reportContent .report-box[data-kind="procedure"] .report-table td,
-#reportContent .report-box[data-kind="procedure"] .report-item,
-#reportContent .report-box[data-kind="procedure"] .report-label-cell {
-    font-size: 14px !important;
-    line-height: 1.6 !important;
-}
+/* Tipografía unificada: el recuadro de procedimiento usa la escala estándar
+   del informe (cuerpo 12,5px / cabeceras 11px), igual que el resto de cajas.
+   Antes tenía 14px forzado, lo que además divergía de lo que el pipeline
+   de copiado pegaba en Medicap (12,5px/11px). */
 
 /* ------------------------------------------------------------- */
 /* TÍTULO PRINCIPAL DEL PROCEDIMIENTO                             */
