@@ -5,3 +5,13 @@
 # Sistema operativo
 Thumbs.db
 Desktop.ini
+
+# Documentación interna de desarrollo (no publicar)
+PROMPT_CONTINUACION.md
+TODO.md
+
+# Respaldo físico de versiones / archivos de usuario (nunca publicar
+# exportaciones ni datos reales)
+*.bak
+exports/
+respaldos/
