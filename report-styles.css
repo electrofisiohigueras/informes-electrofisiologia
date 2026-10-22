@@ -126,7 +126,7 @@
 .layout-table {
     width: 100%;
     border-collapse: collapse;
-    margin: 0;
+    margin: 1.9rem 0;
     padding: 0;
     page-break-inside: avoid;
     table-layout: auto;
@@ -374,6 +374,21 @@
     letter-spacing: 0;
 }
 
+/* Matriz de mediciones: primera columna = nombre de la medición; columnas
+   restantes = parámetros con valor ingresado (cabecera). Padding compacto
+   para acomodar muchas columnas en tamaño carta. */
+.report-measurements-table th,
+.report-measurements-table td {
+    padding: 0.3rem 0.45rem;
+    text-align: left;
+}
+
+.report-measurements-table .report-label-cell {
+    white-space: normal;
+    min-width: 22%;
+    width: 22%;
+}
+
 /* Subsección dentro de una caja (Motivo de Ingreso) */
 .report-subsection {
     margin-top: 0.85rem;
@@ -530,7 +545,7 @@ div, p, table, tr, td {
     }
 
     .report-item {
-        font-size: 12.5pt;
+        font-size: 10pt !important;
         margin: 0.2rem 0;
     }
 
@@ -571,13 +586,46 @@ div, p, table, tr, td {
     }
     .report-label-cell { background-color: #f1f5f9; }
 
-    /* Jerarquía tipográfica en impresión (equivalente a pantalla) */
+    /* Jerarquía tipográfica en impresión: misma escala que en pantalla
+       (12.5px ≈ 10pt). Antes .report-item/celdas medían 12.5pt y el informe
+       impreso era ~35% más grande que la vista previa, rompiendo el acomodo. */
     .report-data-table th,
     .report-data-table td {
         padding: 0.35rem 0.5rem;
     }
 
-    .report-data-header-row th { font-size: 11pt; }
-    .report-data-table td { font-size: 12.5pt; }
-    .report-measurement-title-row td { font-size: 13pt; }
+    .report-box-title {
+        font-size: 13pt !important;
+    }
+
+    .report-subsection-title {
+        font-size: 11pt !important;
+    }
+
+    .report-main-title {
+        font-size: 22pt !important;
+    }
+
+    .report-data-header-row th { font-size: 8.5pt !important; }
+    .report-data-table td { font-size: 10pt !important; }
+    .report-measurement-title-row td { font-size: 10.5pt !important; }
+
+    /* Espaciado vertical uniforme entre secciones (igual que pantalla) */
+    .report-box + .report-box { margin-top: 1rem; }
+
+    /* Fila pareja de secciones (2.1/2.2): separación igual al ritmo */
+    .layout-table { margin: 1rem 0; }
+
+    /* La descripción puede ser larga: permitir que fluya entre hojas */
+    .report-box[data-kind="description"] {
+        page-break-inside: auto;
+    }
+
+    /* La matriz de mediciones NO se divide con el cambio de página:
+       se mueve entera a la hoja siguiente si no cabe */
+    .report-box[data-kind="measurements"],
+    .report-measurements-table {
+        page-break-inside: avoid;
+        break-inside: avoid;
+    }
 }

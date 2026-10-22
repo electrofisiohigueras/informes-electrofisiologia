@@ -2,6 +2,10 @@
 // COPIADO CON FORMATO (MEDICAP / EXCEL) CON ESTILOS INLINE
 // ===================================================================
 
+// Medicap acepta informes de hasta 50.000 caracteres. Si el HTML copiado
+// supera ese límite se avisa al usuario porque el destino puede recortarlo.
+const MEDICAP_MAX_CHARS = 50000;
+
 /**
  * Handler principal del botón "Copiar con Formato" (copyFormattedReportBtn).
  * Copia el reporte al portapapeles en dos formatos simultáneos:
@@ -23,7 +27,11 @@ async function copyFormattedReport(btnEl) {
 
         // 2. Normalizar tablas a HTML estándar ANTES de eliminar las clases,
         //    porque normalizeTablesForRichText detecta la clase .layout-table.
+        //    forceReportCopyStyles TAMBIÉN necesita las clases (identifica
+        //    títulos con classList), por eso corre antes de inlineAllStyles,
+        //    que calcula los estilos inline y AL FINAL elimina las clases.
         normalizeTablesForRichText(clone);
+        forceReportCopyStyles(clone);
 
         // 3. Convertir los estilos computados reales (Tailwind + report-styles.css)
         //    a atributos style="..." inline y eliminar las clases.
@@ -32,7 +40,6 @@ async function copyFormattedReport(btnEl) {
         // 4. Envolver en un contenedor con tipografía base para el destino
         //    y empaquetar como documento Office (Word/Excel) para que
         //    destinos como Medicap conserven los colores al pegar.
-        forceReportCopyStyles(clone);
         const fragment = `
             <div style="font-family:'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;font-size:14px;line-height:1.5;color:#1a1a1a;background-color:#ffffff;">
                 ${clone.innerHTML}
@@ -41,6 +48,13 @@ async function copyFormattedReport(btnEl) {
         const styledHtml = buildOfficeHtml(fragment);
 
         const plainText = clone.innerText || clone.textContent || '';
+
+        // Control del límite de caracteres de Medicap: solo avisa, nunca bloquea.
+        const reportChars = styledHtml.length;
+        if (reportChars > MEDICAP_MAX_CHARS) {
+            console.warn('[Copiar Informe] HTML supera el límite de Medicap:', reportChars);
+            showNotification(`El informe copiado pesa ~${Math.round(reportChars / 1000)} mil caracteres y supera el límite de ${MEDICAP_MAX_CHARS} de Medicap; el final puede recortarse al pegar.`, 'warning');
+        }
 
         // 5. Método principal: Clipboard API moderna con ClipboardItem.
         //    Se ofrece tanto HTML como texto plano para maximizar compatibilidad
@@ -55,7 +69,7 @@ async function copyFormattedReport(btnEl) {
                 await navigator.clipboard.write([item]);
                 console.log('[Copiar Informe] Ruta: ClipboardItem (HTML + texto plano) | HTML bytes:', styledHtml.length);
                 window.__lastCopiedHtml = styledHtml;
-                showCopyFeedback('Copiado (HTML moderno)', btnEl);
+                showCopyFeedback(`Copiado · ${(reportChars / 1000).toFixed(1)}k`, btnEl);
                 return;
             } catch (clipboardErr) {
                 console.warn('ClipboardItem no disponible o denegado, usando respaldo:', clipboardErr);
@@ -67,7 +81,7 @@ async function copyFormattedReport(btnEl) {
         fallbackCopyHtml(styledHtml);
         console.log('[Copiar Informe] Ruta: execCommand fallback | HTML bytes:', styledHtml.length);
         window.__lastCopiedHtml = styledHtml;
-        showCopyFeedback('Copiado (respaldo execCommand)', btnEl);
+        showCopyFeedback(`Copiado · ${(reportChars / 1000).toFixed(1)}k`, btnEl);
 
     } catch (error) {
         console.error('Error al copiar el informe:', error);
@@ -144,16 +158,52 @@ function inlineAllStyles(original, clone) {
     const cloneElements = [clone, ...clone.querySelectorAll('*')];
 
     // Propiedades clave que interpretan correctamente Medicap, Word y Excel.
+    // Lista al mínimo: display/box-sizing los ignora el motor Word y los
+    // longhands de padding/margin/border duplican la información del
+    // shorthand; cada declaración es un carácter menos para el límite de
+    // 50.000 caracteres que admite Medicap por informe.
     const essentialStyles = [
         'font-family', 'font-size', 'font-weight', 'font-style', 'color',
         'background-color', 'text-align', 'text-transform', 'text-decoration',
-        'line-height', 'letter-spacing', 'padding', 'padding-top', 'padding-right',
-        'padding-bottom', 'padding-left', 'margin', 'margin-top', 'margin-right',
-        'margin-bottom', 'margin-left', 'border', 'border-top', 'border-right',
-        'border-bottom', 'border-left', 'border-color', 'border-style', 'border-width',
+        'line-height', 'padding', 'margin',
         'border-collapse', 'width', 'min-width', 'max-width', 'height',
-        'vertical-align', 'white-space', 'box-sizing', 'border-radius', 'display'
+        'vertical-align', 'white-space', 'border-radius'
     ];
+
+    // Los valores 'auto' de dimensiones solo generan ruido: el destino usa el
+    // ancho natural del tag salvo que exista un width inline explícito.
+    const skipAuto = new Set(['width', 'min-width', 'max-width', 'height']);
+
+    // El wrapper del fragmento imponen 'Segoe UI', Tahoma, ... a todo el
+    // informe; los elementos con esa misma familia no necesitan inline.
+    const WRAPPER_FONT_KEY = 'segoeuitahomagenevaverdanasans-serif';
+    const fontKey = (s) => (s || '').replace(/\s+/g, '').replace(/['"]/g, '').toLowerCase();
+
+    // Color base del wrapper (los hijos heredan su color, no hace falta repetirlo).
+    const WRAPPER_COLOR = '#1a1a1a';
+
+    const rootComputed = (() => {
+        try { return window.getComputedStyle(original); } catch (e) { return null; }
+    })();
+    const rootLh = rootComputed ? rootComputed.lineHeight : null;
+    const rootFs = rootComputed ? rootComputed.fontSize : null;
+
+    // Parseador de style="..." a mapa (último valor gana, igual que CSS) para
+    // fusionar sin duplicados los estilos ya fijados por los pases previos
+    // (forceReportCopyStyles y normalizeTablesForRichText) con los computados.
+    const parseStyle = (attr) => {
+        const map = new Map();
+        if (attr) {
+            attr.split(';').forEach(decl => {
+                const sep = decl.indexOf(':');
+                if (sep === -1) return;
+                const key = decl.slice(0, sep).trim();
+                const val = decl.slice(sep + 1).trim();
+                if (key && val) map.set(key, val);
+            });
+        }
+        return map;
+    };
 
     for (let i = 0; i < origElements.length; i++) {
         const orig = origElements[i];
@@ -162,40 +212,87 @@ function inlineAllStyles(original, clone) {
         if (!orig || !cln || cln.nodeType !== Node.ELEMENT_NODE) continue;
 
         const computed = window.getComputedStyle(orig);
-        let styleString = '';
+        const computedMap = new Map();
 
         essentialStyles.forEach(prop => {
             let val = computed.getPropertyValue(prop);
-            if (val && val !== 'initial' && val !== 'none' && val !== 'normal' && val !== 'rgba(0, 0, 0, 0)') {
-                if (prop === 'color' || prop === 'background-color') {
-                    val = rgbToHex(val);
-                }
-                styleString += `${prop}:${val};`;
+            if (!val || val === 'initial' || val === 'none' || val === 'normal' || val === 'rgba(0, 0, 0, 0)') return;
+            // Filtros de valores por defecto que no aportan nada inline.
+            if (val === '0px') return;
+            if (prop === 'font-weight' && val === '400') return;
+            if (prop === 'text-align' && val === 'start') return;
+            if (prop === 'vertical-align' && val === 'baseline') return;
+            if (prop === 'border-radius' && val === '0px') return;
+            if (prop === 'text-decoration' && /^none\b/.test(val.trim())) return;
+            if (skipAuto.has(prop) && val.trim() === 'auto') return;
+            if (prop === 'border-collapse' && orig.tagName !== 'TABLE') return;
+            // Heredados de la base del wrapper: el contenedor ya los define.
+            if (prop === 'font-family' && fontKey(val) === WRAPPER_FONT_KEY) return;
+            // line-height solo se omite si el interlineado px y el tamaño de
+            // fuente coinciden con la base: así el heredado del wrapper (1.5)
+            // da exactamente el mismo valor que el calculado en la app.
+            if (prop === 'line-height' && rootLh !== null && val === rootLh && rootFs !== null && computed.fontSize === rootFs) return;
+            if (prop === 'color') {
+                val = rgbToHex(val);
+                if (!val || val === WRAPPER_COLOR) return;
             }
+            if (prop === 'background-color') {
+                val = rgbToHex(val);
+            }
+            computedMap.set(prop, val);
+        });
+
+        // Si ya existe un ancho explícito (p.ej. el recuadro compacto de Personal
+        // Médico con width:50%): preservarlo; el ancho computado en px fijo
+        // haría que la caja se vea de ancho distinto al pegar en Medicap.
+        const existingMap = parseStyle(cln.getAttribute('style'));
+        if (existingMap.has('width')) computedMap.delete('width');
+
+        // Bordes por lado: fusionar width+style+color en un solo shorthand
+        // (border-top:1px solid #cbd5e1) que Word/Medicap respetan mejor y
+        // ocupa un tercio de los tres longhands.
+        // Si el border:"..." existente (normalmente legado de normalizeTables)
+        // dice canónicamente lo mismo que los 4 lados, no se emiten longhands:
+        // el shorthand ya cubre todo y ahorra ~128 chars por celda.
+        const existingBorder = existingMap.get('border');
+        const existingBorderCanon = existingBorder
+            ? existingBorder.replace(/\s+/g, '').toLowerCase()
+            : null;
+
+        ['top', 'right', 'bottom', 'left'].forEach(side => {
+            const sideStyle = computed.getPropertyValue('border-' + side + '-style');
+            const sideWidth = computed.getPropertyValue('border-' + side + '-width');
+            const sideColor = computed.getPropertyValue('border-' + side + '-color');
+            if (!sideStyle || sideStyle === 'none' || sideStyle === 'hidden') return;
+            if (!sideWidth || sideWidth === '0px') return;
+            const mergedVal = sideWidth + ' ' + sideStyle + ' ' + rgbToHex(sideColor);
+            if (existingBorderCanon && mergedVal.replace(/\s+/g, '').toLowerCase() === existingBorderCanon) return;
+            computedMap.set('border-' + side, mergedVal);
         });
 
         // Reemplazar gradientes CSS por colores sólidos (los editores
         // de texto enriquecido ignoran los gradientes).
         if (computed.backgroundImage && computed.backgroundImage !== 'none') {
             if (orig.classList.contains('report-box-title') || orig.tagName === 'TH') {
-                styleString += 'background-color:#2563eb;color:#ffffff;';
+                computedMap.set('background-color', '#2563eb');
+                computedMap.set('color', '#ffffff');
             } else if (orig.tagName === 'HEADER' || orig.classList.contains('report-title') || orig.classList.contains('report-main-title')) {
-                styleString += 'background-color:#1e3a5f;color:#ffffff;';
+                computedMap.set('background-color', '#1e3a5f');
+                computedMap.set('color', '#ffffff');
             }
         }
 
-        // Unir estilos ya presentes (p.ej. los fijados por normalizeTablesForRichText
-        // o los inline del generador) con los estilos computados.
-        const existingStyle = cln.getAttribute('style') || '';
+        // Fusionar: existentes primero, computados después (el último gana,
+        // igual que el orden del atributo style de la versión anterior).
+        const merged = new Map(existingMap);
+        computedMap.forEach((val, key) => merged.set(key, val));
 
-        // Si ya existe un ancho explícito (p.ej. el recuadro compacto de Personal
-        // Médico con width:50%), preservarlo: el ancho computado en px fijo haría
-        // que la caja se viera de ancho distinto al pegar en destinos como Medicap.
-        if (/(?:^|;)\s*width\s*:/.test(existingStyle)) {
-            styleString = styleString.replace(/width\s*:[^;]+(?:;|$)/g, '');
+        if (merged.size) {
+            const css = Array.from(merged, ([key, val]) => key + ':' + val).join(';') + ';';
+            cln.setAttribute('style', css);
+        } else {
+            cln.removeAttribute('style');
         }
-
-        cln.setAttribute('style', `${existingStyle};${styleString}`);
 
         // Eliminar 'class' para que el destino no dependa de hojas externas.
         cln.removeAttribute('class');
@@ -203,6 +300,10 @@ function inlineAllStyles(original, clone) {
 }
 
 function forceReportCopyStyles(root) {
+    // Tamaños de texto para el HTML copiado. Deben coincidir con las variables
+    // tipográficas de report-styles.css (mismo orden de especificidad).
+    // OJO: correr SIEMPRE antes de inlineAllStyles, que elimina las clases
+    // y haría imposibles las detecciones classList de más abajo.
     if (!root) return;
 
     const setStyle = (el, styles) => {
@@ -240,6 +341,16 @@ function forceReportCopyStyles(root) {
                 setStyle(el, { 'font-size': '12.5px', 'line-height': '1.5' });
             }
         }
+    });
+
+    // Keep-together para el motor Word/Medicap: cada sección intenta viajar
+    // entera al paginar. El motor relaja el avoid cuando una sección es más
+    // alta que la página (no puede evitarse físicamente).
+    root.querySelectorAll('.report-box').forEach(box => {
+        setStyle(box, { 'page-break-inside': 'avoid', 'mso-pagination': 'lines-together' });
+        box.querySelectorAll('table, tr').forEach(el => {
+            setStyle(el, { 'page-break-inside': 'avoid' });
+        });
     });
 }
 
@@ -290,12 +401,17 @@ function normalizeTablesForRichText(container) {
                 th.style.color = '#ffffff';
                 th.style.fontWeight = 'bold';
                 th.style.padding = '5px 8px';
-                th.style.border = `1pt solid ${headerColor}`;
+                // 1px (no 1pt): el valor computado devuelto por el navegador es
+                // '1px solid ...' y así el dedupe de inlineAllStyles elimina los
+                // 4 longhands equivalentes (~128 chars por celda).
+                th.style.border = `1px solid ${headerColor}`;
                 th.style.textAlign = 'left';
                 // Atributo HTML4: muchos editores web lo conservan aunque quiten style.
                 th.setAttribute('bgcolor', headerColor);
                 // Pistas compatibles con Word (mso-): algunos controles tipo
                 // Word ignoran el CSS estándar pero respetan estas propiedades.
+                // Solo en th: en td se descartaron para rendir el límite de
+                // 50.000 caracteres que Medicap acepta por informe.
                 th.style.setProperty('mso-background-source', 'auto');
                 th.style.setProperty('mso-pattern', 'gray-5 auto');
                 th.style.setProperty('mso-border-alt', `solid ${headerColor} .5pt`);
@@ -304,10 +420,7 @@ function normalizeTablesForRichText(container) {
 
             table.querySelectorAll('td').forEach(td => {
                 td.style.padding = '5px 8px';
-                td.style.border = '1pt solid #cbd5e1';
-                td.style.setProperty('mso-background-source', 'auto');
-                td.style.setProperty('mso-pattern', 'gray-5 auto');
-                td.style.setProperty('mso-border-alt', 'solid #cbd5e1 .5pt');
+                td.style.border = '1px solid #cbd5e1';
             });
 
             // Rayado de filas alternas: reforzado con bgcolor (HTML4)
@@ -409,6 +522,7 @@ function inspectReportHtml() {
     const clone = reportContent.cloneNode(true);
     clone.querySelectorAll('.no-print, [data-html2canvas-ignore="true"]').forEach(el => el.remove());
     normalizeTablesForRichText(clone);
+    forceReportCopyStyles(clone); // misma posición que en copyFormattedReport
     inlineAllStyles(reportContent, clone);
 
     const fragment = `
@@ -420,6 +534,10 @@ function inspectReportHtml() {
 
     window.__lastCopiedHtml = styledHtml;
     console.log('[Depuración] HTML a copiar (%d bytes):', styledHtml.length);
+    if (styledHtml.length > MEDICAP_MAX_CHARS) {
+        console.warn('[Depuración] HTML supera el límite de Medicap:', styledHtml.length);
+        showNotification(`El HTML supera el límite de ${MEDICAP_MAX_CHARS} caracteres de Medicap (${styledHtml.length}).`, 'warning');
+    }
     console.log(styledHtml);
 
     const modal = createModal('HTML a copiar (inspección)', `

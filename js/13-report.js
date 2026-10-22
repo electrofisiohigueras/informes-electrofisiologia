@@ -245,15 +245,24 @@ function generateReportHtml(data) {
             year: 'numeric', month: 'long', day: 'numeric'
         });
 
-    const sectionTitle = (title) => `<div class="report-box-title">${title}</div>`;
-
+    /* Numeración secuencial de secciones: el contador incrementa en el orden
+       en que se construye el HTML, que coincide con el orden visual del
+       informe: 1 Datos del Procedimiento, 2 Personal Médico + Prestaciones
+       Adicionales (2.1 / 2.2, lado a lado; 2 solo si no hay adicionales),
+       3 Diagnósticos, 4 Descripción, 5 Mediciones,
+       6 Dispositivo Implantado, 7 Indicaciones. */
+    let sectionNo = 0;
+    const sectionTitle = (title) => {
+        sectionNo += 1;
+        return `<div class="report-box-title">${sectionNo}. ${title}</div>`;
+    };
     // Título principal
     let html = `
     <div class="report-main-title" style="text-align:center;">${escapeHtml(data.procedureName).toUpperCase()}</div>
     `;
 
-    // Datos del Procedimiento: recuadro reutilizable (ancho completo o media página)
-    const procedureBox = `
+    // Datos del Procedimiento: recuadro a ancho completo
+    html += `
         <div class="report-box" data-kind="procedure" style="width:100%;">
             ${sectionTitle('Datos del Procedimiento')}
             <table class="report-table report-data-table">
@@ -287,127 +296,14 @@ function generateReportHtml(data) {
         </div>
     `;
 
-    // Datos del Procedimiento y Descripción: lado a lado (media página cada uno)
-    // si hay descripción; si no, Datos del Procedimiento ocupa el ancho completo.
-    if (data.procedureDescription) {
-        html += `
-        <table class="layout-table">
-            <tbody>
-                <tr>
-                    <td style="width:50%;vertical-align:top;padding-right:6px;">
-                        ${procedureBox}
-                    </td>
-                    <td style="width:50%;vertical-align:top;padding-left:6px;">
-                        <div class="report-box" data-kind="description" style="width:100%;">
-                            ${sectionTitle('Descripción del Procedimiento')}
-                            <p class="report-item" style="white-space:pre-line;">${escapeHtml(data.procedureDescription)}</p>
-                        </div>
-                    </td>
-                </tr>
-            </tbody>
-        </table>`;
-    } else {
-        html += procedureBox;
-    }
-
-    // Diagnósticos y Personal Médico: dos recuadros lado a lado (media página cada uno)
-    html += `
-    <table class="layout-table">
-        <tbody>
-            <tr>
-                <td style="width:50%;vertical-align:top;padding-right:6px;">
-                    <div class="report-box" data-kind="diagnostics" style="width:100%;">
-                        ${sectionTitle('Diagnósticos')}
-                        <table class="report-table report-data-table">
-                            <tbody>
-                                <tr class="report-data-header-row">
-                                    <th>Diagnóstico de Ingreso</th>
-                                    <th>Diagnóstico de Egreso</th>
-                                </tr>
-                                <tr>
-                                    <td>${escapeHtml(data.entryDiagnosis) || 'No especificado'}</td>
-                                    <td>${escapeHtml(data.exitDiagnosis) || 'No especificado'}</td>
-                                </tr>
-                            </tbody>
-                        </table>
-                        ${data.admissionReason ? `
-                        <div class="report-subsection">
-                            <div class="report-subsection-title">Motivo de Ingreso</div>
-                            <p class="report-item" style="white-space:pre-line;">${escapeHtml(data.admissionReason)}</p>
-                        </div>` : ''}
-                    </div>
-                </td>
-                <td style="width:50%;vertical-align:top;padding-left:6px;">
-                    <div class="report-box" data-kind="staff" style="width:100%;">
-                        ${sectionTitle('Personal Médico')}
-                        <table class="report-table report-data-table">
-                            <tbody>
-                                <tr class="report-data-header-row">
-                                    <th style="width:35%;">Rol</th>
-                                    <th>Participantes</th>
-                                </tr>
-                                <tr>
-                                    <td class="report-label-cell">Médico(s) Principal(es)</td>
-                                    <td>${data.mainDoctor.length > 0 ? escapeHtml(data.mainDoctor.join(', ')) : 'No especificado'}</td>
-                                </tr>
-                                <tr>
-                                    <td class="report-label-cell">Enfermero(a/os)</td>
-                                    <td>${data.assistantNurse.length > 0 ? escapeHtml(data.assistantNurse.join(', ')) : 'No especificado'}</td>
-                                </tr>
-                                <tr>
-                                    <td class="report-label-cell">TENS</td>
-                                    <td>${data.tens.length > 0 ? escapeHtml(data.tens.join(', ')) : 'No especificado'}</td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
-                </td>
-            </tr>
-        </tbody>
-    </table>`;
-
-    // Prestaciones Adicionales y Mediciones: lado a lado (media página cada una)
-
-    // --- Construir filas de mediciones (si las hay) ---
-    let measurementsRows = '';
-    if (data.measurements && data.measurements.length > 0) {
-        data.measurements.forEach(measurement => {
-            const valuedParameters = measurement.parameters.filter(param => param.value);
-            if (valuedParameters.length > 0) {
-                measurementsRows += `
-                    <tr class="report-measurement-title-row">
-                        <td colspan="2" class="report-measurement-title">${escapeHtml(measurement.name)}</td>
-                    </tr>
-                    ${valuedParameters.map(param => `
-                        <tr>
-                            <td>${escapeHtml(param.name)}</td>
-                            <td>${escapeHtml(param.value)}</td>
-                        </tr>
-                    `).join('')}`;
-            }
-        });
-
-        const valuedCustomParams = (data.customParameters || []).filter(param => param.value);
-        if (valuedCustomParams.length > 0) {
-            measurementsRows += `
-                <tr class="report-measurement-title-row">
-                    <td colspan="2" class="report-measurement-title">Parámetros Personalizados</td>
-                </tr>
-                ${valuedCustomParams.map(param => `
-                    <tr>
-                        <td>${escapeHtml(param.name)}</td>
-                        <td>${escapeHtml(param.value)}</td>
-                    </tr>
-                `).join('')}`;
-        }
-    }
-
-    // --- Caja de prestaciones adicionales (condicional) ---
+    // Sección 2: Personal Médico (2.1); si hay Prestaciones Adicionales se
+    // emparejan lado a lado como 2.1 / 2.2 dentro de la misma sección 2.
+    // Si no hay adicionales, Personal Médico queda solo como sección 2.
     let additionalCell = '';
     if (data.additionalProcedures && data.additionalProcedures.length > 0) {
         additionalCell = `
         <div class="report-box" data-kind="additional" style="width:100%;">
-            ${sectionTitle('Prestaciones Adicionales')}
+            <div class="report-box-title">2.2 Prestaciones Adicionales</div>
             <table class="report-table report-data-table">
                 <tbody>
                     <tr class="report-data-header-row">
@@ -425,6 +321,141 @@ function generateReportHtml(data) {
         </div>`;
     }
 
+    const pairedWithAdditional = additionalCell !== '';
+    const staffTitleHtml = pairedWithAdditional
+        ? `<div class="report-box-title">2.1 Personal Médico</div>`
+        : sectionTitle('Personal Médico');
+    const staffBoxHtml = `
+    <div class="report-box" data-kind="staff" style="width:100%;">
+        ${staffTitleHtml}
+        <table class="report-table report-data-table">
+            <tbody>
+                <tr class="report-data-header-row">
+                    <th style="width:35%;">Rol</th>
+                    <th>Participantes</th>
+                </tr>
+                <tr>
+                    <td class="report-label-cell">Médico(s) Principal(es)</td>
+                    <td>${data.mainDoctor.length > 0 ? escapeHtml(data.mainDoctor.join(', ')) : 'No especificado'}</td>
+                </tr>
+                <tr>
+                    <td class="report-label-cell">Enfermero(a/os)</td>
+                    <td>${data.assistantNurse.length > 0 ? escapeHtml(data.assistantNurse.join(', ')) : 'No especificado'}</td>
+                </tr>
+                <tr>
+                    <td class="report-label-cell">TENS</td>
+                    <td>${data.tens.length > 0 ? escapeHtml(data.tens.join(', ')) : 'No especificado'}</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>`;
+
+    if (pairedWithAdditional) {
+        sectionNo += 1; // la sección 2 la comparten 2.1 y 2.2
+        html += `
+        <table class="layout-table">
+            <tbody>
+                <tr>
+                    <td style="width:50%;vertical-align:top;padding-right:12px;">${staffBoxHtml}</td>
+                    <td style="width:50%;vertical-align:top;padding-left:12px;">${additionalCell}</td>
+                </tr>
+            </tbody>
+        </table>`;
+    } else {
+        html += staffBoxHtml;
+    }
+
+    // Diagnósticos: recuadro a ancho completo, diagnostics + motivo de ingreso (sección 3)
+    html += `
+    <div class="report-box" data-kind="diagnostics" style="width:100%;">
+        ${sectionTitle('Diagnósticos')}
+        <table class="report-table report-data-table">
+            <tbody>
+                <tr class="report-data-header-row">
+                    <th>Diagnóstico de Ingreso</th>
+                    <th>Diagnóstico de Egreso</th>
+                </tr>
+                <tr>
+                    <td>${escapeHtml(data.entryDiagnosis) || 'No especificado'}</td>
+                    <td>${escapeHtml(data.exitDiagnosis) || 'No especificado'}</td>
+                </tr>
+            </tbody>
+        </table>
+        ${data.admissionReason ? `
+        <div class="report-subsection">
+            <div class="report-subsection-title">Motivo de Ingreso</div>
+            <p class="report-item" style="white-space:pre-line;">${escapeHtml(data.admissionReason)}</p>
+        </div>` : ''}
+    </div>`;
+
+    // Descripción del Procedimiento: recuadro a ancho completo (sección 4)
+    if (data.procedureDescription) {
+        html += `
+        <div class="report-box" data-kind="description" style="width:100%;">
+            ${sectionTitle('Descripción del Procedimiento')}
+            <p class="report-item" style="white-space:pre-line;">${escapeHtml(data.procedureDescription)}</p>
+        </div>`;
+    }
+
+    // Prestaciones Adicionales y Mediciones: recuadros a ancho completo
+
+    // --- Mediciones: una sola tabla tipo matriz. Las columnas son los
+    //     parámetros que tengan valor (unión en orden de aparición) y las
+    //     filas, las mediciones. La primera celda de cabecera queda vacía.
+    //     Los valores solo aparecen si fueron ingresados; lo demás se deja
+    //     en blanco. ---
+    // El aparato "Dispositivo implantado" va en una TABLA DISTINTA (sección
+    // aparte tras la matriz): se excluye de la matriz y de la unión de
+    // columnas. Búsqueda por nombre, insensible a mayúsculas.
+    const DEVICE_ROW_NAME = 'dispositivo implantado';
+    let measurementsRows = '';
+    const paramLabels = [];
+    const apparatusRows = [];
+    const deviceParams = [];
+
+    if (data.measurements && data.measurements.length > 0) {
+        data.measurements.forEach(measurement => {
+            const valued = measurement.parameters.filter(param => param.value);
+            if (valued.length === 0) return;
+            if (measurement.name.trim().toLowerCase() === DEVICE_ROW_NAME) {
+                valued.forEach(param => deviceParams.push(param));
+                return;
+            }
+            const cells = {};
+            valued.forEach(param => {
+                if (!paramLabels.includes(param.name)) paramLabels.push(param.name);
+                cells[param.name] = param.value;
+            });
+            apparatusRows.push({ name: measurement.name, cells: cells });
+        });
+
+        if (apparatusRows.length > 0) {
+            measurementsRows += `
+                <tr class="report-data-header-row">
+                    <th></th>${paramLabels.map(label => `<th>${escapeHtml(label)}</th>`).join('')}
+                </tr>
+                ${apparatusRows.map(row => `
+                <tr>
+                    <td class="report-label-cell">${escapeHtml(row.name)}</td>
+                    ${paramLabels.map(label => `<td>${row.cells[label] ? escapeHtml(row.cells[label]) : ''}</td>`).join('')}
+                </tr>`).join('')}`;
+        }
+    }
+
+    // Parámetros personalizados (si hay): banda propia tras la matriz
+    const valuedCustomParams = (data.customParameters || []).filter(param => param.value);
+    if (valuedCustomParams.length > 0) {
+        measurementsRows += `
+            <tr class="report-measurement-title-row">
+                <td colspan="${paramLabels.length + 1}" class="report-measurement-title">Parámetros Personalizados</td>
+            </tr>
+            ${valuedCustomParams.map(param => `
+            <tr>
+                <td class="report-label-cell">${escapeHtml(param.name)}</td>
+                <td colspan="${Math.max(paramLabels.length, 1)}">${escapeHtml(param.value)}</td>
+            </tr>`).join('')}`;
+    }
+
     // --- Caja de mediciones (condicional) ---
     let measurementsCell = '';
     if (measurementsRows) {
@@ -432,57 +463,51 @@ function generateReportHtml(data) {
         <div class="report-box" data-kind="measurements" style="width:100%;">
             ${sectionTitle('Mediciones')}
             <table class="report-table report-measurements-table">
+                <tbody>${measurementsRows}</tbody>
+            </table>
+        </div>`;
+    }
+
+    // --- Caja de Dispositivo Implantado (tabla distinta de la matriz) ---
+    let deviceCell = '';
+    if (deviceParams.length > 0) {
+        deviceCell = `
+        <div class="report-box" data-kind="measurements" style="width:100%;">
+            ${sectionTitle('Dispositivo Implantado')}
+            <table class="report-table report-device-table">
                 <tbody>
-                    <tr class="report-data-header-row">
-                        <th style="width:50%;">Parámetro</th>
-                        <th>Valor</th>
-                    </tr>
-                    ${measurementsRows}
+                    ${deviceParams.map(param => `
+                    <tr>
+                        <td class="report-label-cell" style="width:30%;">${escapeHtml(param.name)}</td>
+                        <td>${escapeHtml(param.value)}</td>
+                    </tr>`).join('')}
                 </tbody>
             </table>
         </div>`;
     }
 
-    // --- Fila lado a lado (media página cada una); si solo hay una, celda vacía de relleno ---
-    if (additionalCell || measurementsCell) {
-        const both = additionalCell && measurementsCell;
-        html += `
-        <table class="layout-table">
-            <tbody>
-                <tr>
-                    ${additionalCell ? `<td style="width:50%;vertical-align:top;${both ? 'padding-right:6px;' : ''}">${additionalCell}</td>` : ''}
-                    ${measurementsCell ? `<td style="width:50%;vertical-align:top;${both ? 'padding-left:6px;' : ''}">${measurementsCell}</td>` : ''}
-                    ${both ? '' : '<td style="width:50%;padding:0;margin:0;"></td>'}
-                </tr>
-            </tbody>
-        </table>`;
+    // Mediciones y Dispositivo Implantado: cada recuadro a ancho completo
+    if (measurementsCell) {
+        html += measurementsCell;
+    }
+    if (deviceCell) {
+        html += deviceCell;
     }
 
-// Descripción del procedimiento (movida arriba, lado a lado con Datos del Procedimiento)
-
-// Indicaciones post-procedimiento (media página, alineadas a la izquierda)
+    // Indicaciones post-procedimiento (ancho completo)
     if (data.indications.length > 0 || data.additionalIndications) {
         html += `
-        <table class="layout-table">
-            <tbody>
-                <tr>
-                    <td style="width:50%;vertical-align:top;">
-                        <div class="report-box" data-kind="indications" style="width:100%;">
-                            ${sectionTitle('Indicaciones Post-Procedimiento')}
-                            ${data.indications.length > 0 ? `
-                                <ul class="report-indications-list">
-                                    ${data.indications.map(item => `<li>${escapeHtml(item)}</li>`).join('')}
-                                </ul>` : ''}
-                            ${data.additionalIndications ? `
-                                <p class="report-item" style="white-space:pre-line;margin-top:0.5rem;">
-                                    ${escapeHtml(data.additionalIndications)}
-                                </p>` : ''}
-                        </div>
-                    </td>
-                    <td style="width:50%;padding:0;margin:0;"></td>
-                </tr>
-            </tbody>
-        </table>`;
+        <div class="report-box" data-kind="indications" style="width:100%;">
+            ${sectionTitle('Indicaciones Post-Procedimiento')}
+            ${data.indications.length > 0 ? `
+                <ul class="report-indications-list">
+                    ${data.indications.map(item => `<li>${escapeHtml(item)}</li>`).join('')}
+                </ul>` : ''}
+            ${data.additionalIndications ? `
+                <p class="report-item" style="white-space:pre-line;margin-top:0.5rem;">
+                    ${escapeHtml(data.additionalIndications)}
+                </p>` : ''}
+        </div>`;
     }
 
     return html;
