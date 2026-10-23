@@ -94,6 +94,78 @@ function attachCommonDataSectionEventListeners() {
             }
         }
     });
+    // Botón "Restaurar catálogos desde la web" (solo versión publicada en HTTPS)
+    const restoreBtn = document.getElementById('restoreCatalogsBtn');
+    if (restoreBtn) {
+        restoreBtn.addEventListener('click', restoreCatalogsFromWeb);
+    }
+}
+
+// Catálogos compartidos que sincroniza "Restaurar catálogos": listas de
+// datos comunes + catálogo de modelos por tipo y marca. Lo local de cada
+// usuario (personal, plantillas, procedimientos, valores de mediciones)
+// nunca se toca.
+const SHARED_CATALOG_LISTS = [
+    'communes', 'insurances', 'origins', 'entryDiagnoses', 'exitDiagnoses',
+    'deviceBrands', 'deviceTypes', 'stimulationPolarities', 'indications'
+];
+
+function applySharedCatalogs(data) {
+    if (!data || !data.commonData) return false;
+    let applied = 0;
+    SHARED_CATALOG_LISTS.forEach(key => {
+        const incoming = data.commonData[key];
+        if (Array.isArray(incoming)) {
+            appState.commonData[key] = incoming.filter(v => typeof v === 'string' && v.trim());
+            applied++;
+        }
+    });
+    const models = data.commonData.deviceModelsByTypeAndBrand;
+    if (models && typeof models === 'object' && !Array.isArray(models)) {
+        const clean = {};
+        Object.keys(models).forEach(type => {
+            if (models[type] && typeof models[type] === 'object' && !Array.isArray(models[type])) {
+                clean[type] = Object.keys(models[type]).reduce((acc, brand) => {
+                    if (Array.isArray(models[type][brand])) {
+                        acc[brand] = models[type][brand].filter(v => typeof v === 'string' && v.trim());
+                    }
+                    return acc;
+                }, {});
+            }
+        });
+        if (Object.keys(clean).length > 0) {
+            appState.commonData.deviceModelsByTypeAndBrand = clean;
+            applied++;
+        }
+    }
+    return applied > 0;
+}
+
+async function restoreCatalogsFromWeb() {
+    if (window.location.protocol === 'file:') {
+        showNotification('Restaurar catálogos requiere la versión publicada (URL de GitHub Pages). En la copia local los catálogos dependen de data.json y localStorage.', 'info');
+        return;
+    }
+    const ok = await showConfirmDialog(
+        'Restaurar catálogos',
+        'Se reemplazarán los catálogos compartidos (comunas, previsiones, procedencias, diagnósticos, marcas/tipos de dispositivos e indicaciones) por la versión publicada en GitHub. Los elementos agregados localmente en esas listas se perderán.',
+        { confirmText: 'Restaurar', cancelText: 'Cancelar' }
+    );
+    if (!ok) return;
+    try {
+        // Cache-busting para recibir la versión recién publicada, no la del caché.
+        const response = await fetch('data.json?t=' + Date.now());
+        if (!response.ok) throw new Error('data.json HTTP ' + response.status);
+        const data = await response.json();
+        if (!applySharedCatalogs(data)) throw new Error('estructura de catálogos no reconocida');
+        saveAllData();
+        updateCommonDataDropdowns();
+        updateCommonDataLists();
+        showNotification('Catálogos restaurados desde la versión publicada', 'success');
+    } catch (error) {
+        console.error('Error al restaurar catálogos:', error);
+        showNotification('No se pudieron restaurar los catálogos. Verifique su conexión e intente nuevamente.', 'error');
+    }
 }
 
 function addCommonDataItem(dataType, inputId, listId, deleteClass) {

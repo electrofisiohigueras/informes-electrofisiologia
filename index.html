@@ -22,7 +22,7 @@
         <header class="app-header bg-gradient-to-r from-blue-700 to-blue-500 text-white rounded-xl shadow-md p-5 mb-6 no-print">
             <div class="flex flex-wrap justify-between items-center gap-3">
                 <div>
-                    <h1 class="text-2xl font-bold">Sistema de Informes Médicos</h1>
+                    <h1 class="text-2xl font-bold">Sistema de Informes Médicos <span id="appVersion" class="app-version"></span></h1>
                     <p class="text-blue-100 text-sm"><i class="fas fa-heart-pulse mr-1"></i>Registro de procedimientos ELECTROFISIOLOGÍA</p>
                 </div>
                 <div class="flex flex-wrap items-center gap-2 header-buttons">
@@ -80,9 +80,14 @@
                 <div class="card p-5 mb-6">
                     <div class="flex justify-between items-center mb-4">
                         <h2 class="section-title">Gestión de Datos Comunes</h2>
-                        <button id="backFromCommonDataBtn" class="btn btn-secondary">
-                            <i class="fas fa-arrow-left mr-1"></i> Volver
-                        </button>
+                        <div class="flex flex-wrap items-center gap-2">
+                            <button id="restoreCatalogsBtn" class="btn btn-primary" title="Vuelve a cargar los catálogos compartidos publicados en GitHub (marcas/tipos de dispositivos, diagnósticos, comunas, etc.)">
+                                <i class="fas fa-cloud-arrow-down mr-1"></i> Restaurar catálogos
+                            </button>
+                            <button id="backFromCommonDataBtn" class="btn btn-secondary">
+                                <i class="fas fa-arrow-left mr-1"></i> Volver
+                            </button>
+                        </div>
                     </div>
                     <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
                         <!-- Columna 1: Ubicación y Administración -->

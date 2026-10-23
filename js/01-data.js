@@ -7,6 +7,9 @@
 // 1. CONFIGURACIÓN Y DATOS INICIALES
 // ===================================================================
 
+// Versión visible en el header; bump en cada release publicada.
+const APP_VERSION = '1.2.0';
+
 let predefinedData = {};
 let defaultMeasurements = [];
 let defaultIndications = [];

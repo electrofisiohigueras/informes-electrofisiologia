@@ -1609,6 +1609,22 @@ body {
     gap: 0.6rem;
 }
 
+/* ---- Chip de versión junto al título del header ---- */
+.app-version {
+    display: inline-block;
+    vertical-align: middle;
+    margin-left: 0.5rem;
+    padding: 0.1rem 0.55rem;
+    border: 1px solid rgba(255, 255, 255, 0.4);
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.16);
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.03em;
+    color: #e0ecff;
+    position: relative;
+}
+
 /* ---- Tarjetas de procedimiento y mediciones ---- */
 .procedure-section {
     border: 1px solid #e2e8f0;

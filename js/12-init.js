@@ -10,6 +10,10 @@ async function initializeApp() {
     appState.commonData = data.commonData;
     appState.measurements = [...data.defaultMeasurements];
 
+    // 1b. Versión visible en el header
+    const versionEl = document.getElementById('appVersion');
+    if (versionEl) versionEl.textContent = 'v' + APP_VERSION;
+
     // 2. Inicializar elementos del DOM
     initializeElements();
 
