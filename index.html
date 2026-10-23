@@ -251,8 +251,8 @@
                 <div class="procedure-section fade-in">
                     <div class="procedure-header">
                         <h2 class="text-xl font-semibold text-gray-800">Datos del Procedimiento</h2>
-                        <div class="flex flex-wrap items-center gap-2">
-                            <select id="loadTemplate" class="procedure-select bg-green-100">
+                        <div class="procedure-header-tools">
+                            <select id="loadTemplate" class="procedure-select">
                                 <option value="">Cargar Plantilla</option>
                             </select>
                             <button type="button" id="manageTemplatesBtn" class="btn btn-secondary text-sm" title="Guardar el formulario actual como plantilla o administrar las existentes">
@@ -328,7 +328,7 @@
                     </div>
 
                     <div class="mt-4">
-                        <button type="button" id="addProcedureBtn" class="btn btn-secondary">
+                        <button type="button" id="addProcedureBtn" class="btn btn-outline">
                             <i class="fas fa-plus mr-1"></i> Agregar otra prestación
                         </button>
                     </div>
@@ -424,7 +424,7 @@
                         <div class="form-group">
                             <div class="flex items-center justify-between mb-1">
                                 <label for="procedureDescription" class="form-label mb-0">Descripción detallada del procedimiento</label>
-                                <button type="button" id="useDescSuggestionBtn" class="btn bg-blue-50 text-blue-600 hover:bg-blue-100 text-xs px-2 py-1 rounded flex items-center gap-1 transition-colors">
+                                <button type="button" id="useDescSuggestionBtn" class="btn bg-blue-50 text-blue-700 hover:bg-blue-100 text-sm px-3 py-1.5 rounded flex items-center gap-1.5 transition-colors">
                                     <i class="fas fa-magic"></i> Usar descripción predeterminada
                                 </button>
                             </div>
@@ -435,7 +435,7 @@
                         <div class="form-group">
                             <label class="flex items-center gap-3 p-3 bg-blue-50 rounded-lg hover:bg-blue-100 transition-colors cursor-pointer">
                                 <input type="checkbox" id="addMeasurements" class="rounded w-5 h-5 text-blue-600 focus:ring-blue-500">
-                                <span class="form-label mb-0 text-lg font-medium text-gray-700">Incluir mediciones</span>
+                                <span class="form-label mb-0 font-medium text-gray-700">Incluir mediciones</span>
                             </label>
                             <div class="flex flex-wrap items-center gap-3 mt-3">
                                 <button type="button" id="openMeasurementsModalBtn" class="btn bg-blue-600 text-white hover:bg-blue-700" title="Abrir el editor de mediciones">

@@ -315,7 +315,7 @@ function updateMeasurementsSummary() {
 
     if (!elements.addMeasurementsCheckbox?.checked) {
         el.textContent = 'No incluidas en el informe.';
-        el.className = 'text-sm text-gray-400';
+        el.className = 'text-sm text-gray-500';
         return;
     }
 
@@ -332,7 +332,7 @@ function updateMeasurementsSummary() {
 
     if (parametros === 0 && personalizados === 0) {
         el.textContent = 'Incluidas, pero aún sin valores ingresados.';
-        el.className = 'text-sm text-yellow-600';
+        el.className = 'text-sm text-amber-800 font-medium';
         return;
     }
 
@@ -345,7 +345,7 @@ function updateMeasurementsSummary() {
         partes.push(personalizados + (personalizados === 1 ? ' parámetro personalizado' : ' parámetros personalizados'));
     }
     el.textContent = '✔ ' + partes.join(' y ') + '.';
-    el.className = 'text-sm text-green-600 font-medium';
+    el.className = 'text-sm text-green-800 font-medium';
 }
 
 // Mantener el resumen sincronizado ante cualquier cambio dentro del editor

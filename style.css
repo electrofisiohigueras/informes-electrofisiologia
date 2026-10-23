@@ -152,8 +152,9 @@ body {
 }
 
 .error-message { 
-    color: var(--error); 
-    font-size: 0.75rem; 
+    color: #b91c1c; 
+    font-size: 0.8125rem;
+    font-weight: 500;
     margin-top: 0.25rem; 
 }
 
@@ -323,7 +324,7 @@ body {
 }
 
 .tab-btn:not(.active) {
-    color: var(--text-light);
+    color: #475569;
 }
 
 .tab-btn:not(.active):hover {
@@ -1387,7 +1388,7 @@ body {
 /* ---- Cabecera de la aplicación ---- */
 .app-header {
     position: relative;
-    background: linear-gradient(135deg, #1e3a8a 0%, #2563eb 55%, #3b82f6 100%);
+    background: linear-gradient(110deg, #1e3a8a 0%, #1e40af 55%, #1d4ed8 100%);
     border: 1px solid rgba(255, 255, 255, 0.12);
 }
 
@@ -1428,35 +1429,20 @@ body {
     color: var(--primary-dark);
 }
 
-.app-header .btn-secondary {
-    background: rgba(255, 255, 255, 0.18);
-    color: #ffffff;
-    border-color: rgba(255, 255, 255, 0.35);
-}
-
-.app-header .btn-secondary:hover {
-    background: rgba(255, 255, 255, 0.28);
-}
-
-.app-header .btn[class*="blue-600"] {
-    background: rgba(255, 255, 255, 0.18);
-    color: #ffffff;
-    border-color: rgba(255, 255, 255, 0.35);
-}
-
-.app-header .btn[class*="blue-600"]:hover {
-    background: rgba(255, 255, 255, 0.28);
-}
-
+/* Ghost sobre azul oscuro: fondo translúcido OSCURO (no blanco) para que el
+   texto blanco conserve contraste en todo el ancho del degradado. */
+.app-header .btn-secondary,
+.app-header .btn[class*="blue-600"],
 .app-header .dropdown-btn {
-    background: rgba(255, 255, 255, 0.18);
-    border: 1px solid rgba(255, 255, 255, 0.35);
-    backdrop-filter: blur(4px);
-    -webkit-backdrop-filter: blur(4px);
+    background: rgba(15, 23, 42, 0.28);
+    color: #ffffff;
+    border-color: rgba(255, 255, 255, 0.45);
 }
 
+.app-header .btn-secondary:hover,
+.app-header .btn[class*="blue-600"]:hover,
 .app-header .dropdown-btn:hover {
-    background: rgba(255, 255, 255, 0.28);
+    background: rgba(15, 23, 42, 0.45);
 }
 
 /* ---- Scrollbars (WebKit y Firefox) ---- */
@@ -1586,7 +1572,7 @@ body {
 /* ---- Cabecera de la app: tipografía ---- */
 .app-header h1 {
     font-size: 1.7rem;
-    font-weight: 800;
+    font-weight: 700;
     letter-spacing: -0.02em;
     line-height: 1.15;
 }
@@ -1741,4 +1727,54 @@ body {
 .staff-selection-container:focus-within .staff-selection-box {
     border-color: var(--primary);
     box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+}
+
+/* =================================================================== */
+/* PASE 3 - CONTRASTE Y JERARQUÍA VISUAL (v1.4.0)                       */
+/* =================================================================== */
+
+/* Botón secundario claro: fondo blanco con borde azul, para acciones
+   de peso menor que la principal (no compiten por atención). */
+.btn-outline {
+    background: #ffffff;
+    color: var(--primary);
+    border: 1px solid #93c5fd;
+}
+
+.btn-outline:hover {
+    background: #eff6ff;
+    border-color: var(--primary-light);
+}
+
+/* Anillo de enfoque visible al navegar con teclado: los estados :focus
+   de los campos ponen outline:none (borde + sombra), esto lo recupera
+   en la interacción por tabulación. */
+.form-input:focus-visible,
+.form-textarea:focus-visible,
+.form-select:focus-visible,
+.procedure-input:focus-visible,
+.procedure-select:focus-visible,
+.wizard-form-input:focus-visible,
+.wizard-form-select:focus-visible,
+.wizard-form-textarea:focus-visible {
+    outline: 2px solid var(--primary-light);
+    outline-offset: 2px;
+}
+
+/* Bloque de herramientas del encabezado de Datos del Procedimiento:
+   siempre en un renglón, alineado a la derecha y con altura pareja. */
+.procedure-header-tools {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex-wrap: nowrap;
+    white-space: nowrap;
+}
+
+@media (max-width: 768px) {
+    .procedure-header-tools {
+        flex-wrap: wrap;
+        white-space: normal;
+        width: 100%;
+    }
 }
