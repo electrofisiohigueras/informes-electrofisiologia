@@ -1,0 +1,16 @@
+{
+  "name": "Sistema de Informes Médicos - Electrofisiología",
+  "short_name": "Informes EF",
+  "description": "Registro de informes de procedimientos de electrofisiología. Los datos se guardan localmente en el navegador.",
+  "lang": "es",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#f8fafc",
+  "theme_color": "#1e3a8a",
+  "icons": [
+    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icons/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}
