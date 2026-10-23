@@ -145,7 +145,7 @@ function renderMeasurements() {
                 inputField = `
                     <input type="text" class="form-input mt-1 w-full p-2 border border-gray-300 rounded param-value" 
                            value="${escapeHtml(param.value)}" data-param-index="${index}" 
-                           data-measurement-id="${measurement.id}" placeholder="${param.range}">
+                           data-measurement-id="${measurement.id}" placeholder="Ej: ${escapeHtml(param.range)}">
                 `;
             } else {
                 inputField = `
@@ -167,10 +167,10 @@ function renderMeasurements() {
             }
 
             return `
-                <div class="parameter-row p-2 bg-white rounded border border-gray-200 hover:border-blue-200 transition-all shadow-sm">
+                <div class="parameter-row p-2 bg-white rounded border border-gray-100 hover:border-blue-200 transition-all">
                     <div class="flex items-center justify-between gap-2 mb-1">
                         ${parameterNameField}
-                        <button type="button" class="remove-parameter-btn text-red-400 hover:text-red-600 text-xs p-1 flex-shrink-0" 
+                        <button type="button" class="remove-parameter-btn flex-shrink-0" 
                                 data-measurement-id="${measurement.id}" data-param-index="${index}" title="Eliminar parámetro" aria-label="Eliminar parámetro">
                             <i class="fas fa-times"></i>
                         </button>
@@ -199,7 +199,7 @@ function renderMeasurements() {
                 ${paramsHTML}
             </div>
             <div class="p-2 border-t border-gray-200 bg-white flex justify-end">
-                <button type="button" class="add-parameter-btn bg-blue-500 hover:bg-blue-600 text-white text-xs px-3 py-1.5 rounded-lg flex items-center gap-1 transition-all shadow-sm" 
+                <button type="button" class="add-parameter-btn" 
                         data-measurement-id="${measurement.id}">
                     <i class="fas fa-plus"></i> Agregar parámetro
                 </button>

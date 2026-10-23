@@ -807,38 +807,48 @@ body {
     color: #DC2626;
 }
 
+/* X de eliminar parámetro: GHOST (gris tenue) que se enrojece al pasar el
+   mouse. Antes era un círculo rojo sólido junto a CADA parámetro: saturaba
+   el modal de rojo y daba la sensación de que todo tenía un error. */
 .remove-parameter-btn {
-    background: #EF4444;
-    color: white;
+    background: transparent;
+    color: #94a3b8;
     border: none;
-    padding: 0.5rem 0.75rem;
+    padding: 0.3rem;
     border-radius: 0.375rem;
     cursor: pointer;
     font-size: 0.75rem;
+    line-height: 1;
     display: flex;
     align-items: center;
-    gap: 0.25rem;
+    justify-content: center;
+    transition: color 0.15s, background 0.15s;
 }
 
 .remove-parameter-btn:hover {
-    background: #DC2626;
+    color: #dc2626;
+    background: #fef2f2;
 }
 
+/* "Agregar parámetro": borde azul claro (outline) — acción secundaria que
+   no debe competir con el botón principal del flujo. */
 .add-parameter-btn {
-    background: #10B981;
-    color: white;
-    border: none;
-    padding: 0.5rem 0.75rem;
-    border-radius: 0.375rem;
+    background: #ffffff;
+    color: var(--primary);
+    border: 1px solid #93c5fd;
+    padding: 0.4rem 0.75rem;
+    border-radius: 0.5rem;
     cursor: pointer;
     font-size: 0.75rem;
     display: flex;
     align-items: center;
     gap: 0.25rem;
+    transition: background 0.15s, border-color 0.15s;
 }
 
 .add-parameter-btn:hover {
-    background: #059669;
+    background: #eff6ff;
+    border-color: var(--primary-light);
 }
 
 /* =================================================================== */

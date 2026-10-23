@@ -3,13 +3,15 @@
 // ===================================================================
 // Estrategias:
 //  - data.json: network-first (catálogos siempre frescos; offline cae al caché)
+//  - js/css de la app: network-first (UNA recarga basta para ver la versión
+//    publicada; offline cae al caché)
 //  - navegación (index.html): network-first con respaldo en caché
-//  - assets estáticos (js/css/vendor): cache-first con precache en install
+//  - vendor/webfonts: cache-first con precache en install
 // Solo se activa en HTTPS; la copia local (file://) no lo registra.
 //
 // Al publicar una nueva versión de la app, actualizar SW_VERSION para que el
 // caché viejo se elimine en la activación y los colegas reciban los cambios.
-const SW_VERSION = '1.4.0';
+const SW_VERSION = '1.5.0';
 const CORE_CACHE = 'im-core-' + SW_VERSION;
 const DATA_CACHE = 'im-data-' + SW_VERSION;
 const CACHE_PREFIXES = ['im-core-', 'im-data-'];
@@ -86,6 +88,27 @@ self.addEventListener('fetch', event => {
                 if (response && response.ok) {
                     const copy = response.clone();
                     caches.open(DATA_CACHE).then(cache => cache.put(request, copy));
+                }
+                return response;
+            }).catch(() =>
+                caches.match(request).then(cached => cached ||
+                    Response.error())
+            )
+        );
+        return;
+    }
+
+    // JS/CSS de la app: red primero con respaldo en caché. Con cache-first,
+    // cada release exigía DOS recargas (la primera aún servía la versión
+    // anterior desde el caché del SW instalado). Network-first garantiza
+    // que UNA recarga baste para ver la versión publicada; sin red, cae
+    // al caché (offline sigue funcionando).
+    if (url.pathname.endsWith('.js') || url.pathname.endsWith('.css')) {
+        event.respondWith(
+            fetch(request).then(response => {
+                if (response && response.ok) {
+                    const copy = response.clone();
+                    caches.open(CORE_CACHE).then(cache => cache.put(request, copy));
                 }
                 return response;
             }).catch(() =>
