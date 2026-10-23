@@ -13,6 +13,10 @@ function saveAllData() {
             lastSaved: new Date().toISOString()
         };
         localStorage.setItem('medicalReportAppData', JSON.stringify(dataToSave));
+        // Gancho de sincronización en la nube (js/17-cloud-sync.js): sube con
+        // debounce si el colega configuró perfil+token. Guard typeof porque
+        // 07 se carga antes que 17; en runtime ambos ya existen.
+        if (typeof scheduleCloudPush === 'function') scheduleCloudPush();
         return true;
     } catch (error) {
         console.error('Error saving data:', error);

@@ -9,7 +9,7 @@
 
 // Versión visible en el header; bump en cada release publicada.
 // Mantener sincronizado con SW_VERSION en sw.js (cambia el caché de la PWA).
-const APP_VERSION = '1.6.0';
+const APP_VERSION = '2.0.0';
 
 let predefinedData = {};
 let defaultMeasurements = [];
