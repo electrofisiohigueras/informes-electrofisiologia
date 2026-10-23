@@ -13,10 +13,14 @@
 if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', async () => {
         await initializeApp();
+        // Restaura estado guardado crea selects/checkboxes sin eventos:
+        // recalcular los indicadores de pestaña tras el arranque.
+        setTimeout(updateTabStatusDots, 80);
     });
 } else {
     (async () => {
         await initializeApp();
+        setTimeout(updateTabStatusDots, 80);
     })();
 }
 

@@ -1788,3 +1788,31 @@ body {
         width: 100%;
     }
 }
+
+/* ===================================================================
+   PASE 4 v1.6.0 - Indicador de estado por pestaña
+   dot verde = pestaña completa / dot gris = pendiente / dot rojo = error
+   =================================================================== */
+.tab-status-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 9999px;
+    display: inline-block;
+    margin-left: 0.45rem;
+    vertical-align: middle;
+    background: transparent;
+    transition: background 0.2s, box-shadow 0.2s;
+}
+
+.tab-status-dot.ok {
+    background: #16a34a;
+}
+
+.tab-status-dot.pending {
+    background: #cbd5e1;
+}
+
+.tab-status-dot.error {
+    background: #dc2626;
+    box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.18);
+}

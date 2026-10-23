@@ -78,13 +78,69 @@ function highlightFormErrors(errors) {
             try { firstElement.focus({ preventScroll: true }); } catch (e) { /* algunos campos no aceptan focus */ }
         }, 150);
     }
+
+    updateTabStatusDots();
 }
 
 // Elimina todos los resaltados de validación del formulario.
 function clearFormErrorHighlights() {
     document.querySelectorAll('.input-error').forEach(el => el.classList.remove('input-error'));
     document.querySelectorAll('.error-message').forEach(el => el.classList.add('hidden'));
+    updateTabStatusDots();
 }
+
+// ===================================================================
+// Indicador de estado por pestaña (chip de pharmacovigilancia visual):
+//  ✓ verde  = pestaña completa (sus campos valiosos están llenos)
+//  punto gris = sin contenido relevante
+//  punto rojo = tiene un error de validación visible
+// Es puramente orientativo: no bloquea Vista Previa ni Copiar.
+// Se recalcula con cada input/change del documento (delegación).
+// ===================================================================
+function updateTabStatusDots() {
+    const tabContentOf = {
+        'patient-data': ['commune', 'healthInsurance', 'origin'],
+        'staff-data': ['#mainDoctorCheckboxes', '#assistantNurseCheckboxes', '#tensCheckboxes'],
+        'diagnosis-data': ['#entryDiagnosis', '#customEntryDiagnosis', '#exitDiagnosis', '#customExitDiagnosis', '#admissionReason'],
+        'procedure-data': ['#procedureDescription', '#addMeasurements'],
+        'indications-data': ['#indicationsCheckboxes', '#additionalIndications']
+    };
+
+    const completionOf = {
+        'patient-data': ids => ids.every(id => elements[id]?.value),
+        'staff-data': selectors => selectors.some(sel => document.querySelector(sel + ' input:checked')),
+        'diagnosis-data': selectors => selectors.some(sel => document.querySelector(sel)?.value?.trim?.() ? true : document.querySelector(sel)?.checked),
+        'procedure-data': ids => ids.some(id => (elements[id]?.value?.trim?.() ?? '') !== '' || elements[id]?.checked),
+        'indications-data': selectors => selectors.some(sel => sel === '#additionalIndications' ? document.querySelector(sel)?.value?.trim?.() : document.querySelector(sel + ' input:checked'))
+    };
+
+    document.querySelectorAll('.nav-tabs .tab-btn').forEach(btn => {
+        const tab = btn.dataset.tab;
+        let dot = btn.querySelector('.tab-status-dot');
+        if (!dot) {
+            dot = document.createElement('span');
+            dot.className = 'tab-status-dot';
+            dot.setAttribute('aria-hidden', 'true');
+            btn.appendChild(dot);
+        }
+
+        dot.className = 'tab-status-dot';
+        const content = document.getElementById(tab);
+        const hasVisibleError = content ? content.querySelector('.input-error') : null;
+        if (hasVisibleError) {
+            dot.classList.add('error');
+            return;
+        }
+        const complete = (completionOf[tab] || (() => false))(tabContentOf[tab] || []);
+        if (complete) dot.classList.add('ok');
+        else dot.classList.add('pending');
+    });
+}
+
+// Recalcula los indicadores al editar/chequear cualquier campo del documento
+// (delegación en fase burbuja; el propio método es barato: ~15 consultas).
+document.addEventListener('input', updateTabStatusDots);
+document.addEventListener('change', updateTabStatusDots);
 
 function previewReport() {
     generateReport();
