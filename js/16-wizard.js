@@ -47,10 +47,18 @@ window.requestCloseWizard = requestCloseWizard;
 
 // Genera el HTML del campo de un parámetro de medición en el asistente.
 // Devuelve un <select> con opciones predeterminadas si aplica, o null (→ input de texto).
+// Igual que el editor del formulario principal: lleva SIEMPRE una opción vacía
+// ("Seleccionar") para que un select no tocado quede en blanco de verdad y el
+// navegador no seleccione la primera opción por su cuenta (valores fantasma).
+// Marca/Modelo quedan deshabilitados hasta que exista Tipo, y Modelo hasta que
+// exista Marca, con el mismo texto de ayuda que usa el editor.
 function wizardParamSelectHTML(measurement, param, pi, mi, measValues) {
+    measValues = measValues || {};
     const key = mi + '_' + pi;
     const val = measValues[key] !== undefined ? measValues[key] : (param.value || '');
     let options = null;
+    let disabled = false;
+    let placeholder = 'Seleccionar';
 
     const wizValueOf = (idx) => {
         if (idx < 0) return '';
@@ -67,13 +75,28 @@ function wizardParamSelectHTML(measurement, param, pi, mi, measValues) {
         } else {
             options = appState.commonData.deviceBrands || [];
         }
+        if (!tVal) {
+            disabled = true;
+            placeholder = 'Primero seleccione tipo';
+        }
     } else if (param.name === 'Modelo') {
         const tIdx = measurement.parameters.findIndex(x => x.name === 'Tipo de dispositivo');
         const bIdx = measurement.parameters.findIndex(x => x.name === 'Marca');
         const tVal = wizValueOf(tIdx);
         const bVal = wizValueOf(bIdx);
-        if (tVal && bVal && appState.commonData.deviceModelsByTypeAndBrand[tVal] && appState.commonData.deviceModelsByTypeAndBrand[tVal][bVal]) {
-            options = appState.commonData.deviceModelsByTypeAndBrand[tVal][bVal];
+        const availableModels = (tVal && bVal && appState.commonData.deviceModelsByTypeAndBrand[tVal] && appState.commonData.deviceModelsByTypeAndBrand[tVal][bVal])
+            ? appState.commonData.deviceModelsByTypeAndBrand[tVal][bVal]
+            : [];
+        options = availableModels;
+        if (!tVal) {
+            disabled = true;
+            placeholder = 'Primero seleccione tipo';
+        } else if (!bVal) {
+            disabled = true;
+            placeholder = 'Primero seleccione marca';
+        } else if (availableModels.length === 0) {
+            disabled = true;
+            placeholder = 'No hay modelos disponibles';
         }
     } else if (param.name === 'Polaridad de estimulación') {
         options = appState.commonData.stimulationPolarities || [];
@@ -84,13 +107,21 @@ function wizardParamSelectHTML(measurement, param, pi, mi, measValues) {
         ]));
     }
 
-    if (!options || options.length === 0) return null;
+    // Los parámetros de dispositivo siempre se muestran como select (aunque
+    // queden deshabilitados); el resto sin opciones vuelve a un input de texto.
+    const isDeviceParam = param.name === 'Tipo de dispositivo' || param.name === 'Marca' || param.name === 'Modelo';
+    if (isDeviceParam) {
+        options = options || [];
+    } else if (!options || options.length === 0) {
+        return null;
+    }
 
-    const optionsHTML = options.map(o =>
-        `<option value="${escapeHtml(o)}" ${val === o ? 'selected' : ''}>${escapeHtml(o)}</option>`
-    ).join('') + '<option value="__add_new__">➕ Agregar nuevo...</option>';
+    const optionsHTML = `<option value="" ${val === '' ? 'selected' : ''}>${escapeHtml(placeholder)}</option>` +
+        options.map(o =>
+            `<option value="${escapeHtml(o)}" ${val === o ? 'selected' : ''}>${escapeHtml(o)}</option>`
+        ).join('') + (disabled ? '' : '<option value="__add_new__">➕ Agregar nuevo...</option>');
 
-    return `<select data-m-index="${mi}" data-p-index="${pi}" class="wizard-form-select"
+    return `<select data-m-index="${mi}" data-p-index="${pi}" class="wizard-form-select" ${disabled ? 'disabled' : ''}
         style="flex:1;padding:7px 10px;border:1px solid #cbd5e1;border-radius:6px;font-size:0.875rem;background:#fff;">${optionsHTML}</select>`;
 }
 
