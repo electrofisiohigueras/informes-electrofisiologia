@@ -223,10 +223,34 @@ function setupWizardDiagnosisSelect(selectId, arr, stateKey) {
     rebuild();
 }
 
+// Precarga de descripción para el paso 6 del asistente, en orden de
+// prioridad: texto ya escrito en el formulario principal > descripción
+// predefinida del procedimiento. Solo corre en la primera visita al paso
+// (datos aún undefined); así no pisa lo que el usuario escribió o limpió.
+function ensureWizardPredefinedDescription() {
+    const data = wizardState.data;
+    if (data.procedureDescription !== undefined) return;
+
+    const mainDesc = document.getElementById('procedureDescription')?.value?.trim() || '';
+    if (mainDesc) {
+        data.procedureDescription = mainDesc;
+        return;
+    }
+
+    const procedure = appState.procedures.find(p => p.id === data.procedureName);
+    if (procedure && procedure.description && procedure.description.trim()) {
+        data.procedureDescription = procedure.description.trim();
+    }
+}
+
 // Genera la descripción sugerida a partir de los datos actuales del asistente.
 function wizardDescriptionSuggestion() {
     const d = wizardState.data;
     const procedure = appState.procedures.find(p => p.id === d.procedureName);
+    // La descripción predefinida del procedimiento manda; la heurística solo es respaldo.
+    if (procedure && procedure.description && procedure.description.trim()) {
+        return procedure.description.trim();
+    }
     const additionalProcedures = [];
     if (d.procedureName2) {
         const p2 = appState.procedures.find(p => p.id === d.procedureName2);
@@ -244,8 +268,15 @@ function wizardDescriptionSuggestion() {
     });
 }
 
-// Usa la descripción sugerida en el formulario principal.
+// Usa la descripción predefinida del procedimiento si existe; si no, genera
+// la sugerencia heurística a partir de los datos del formulario principal.
 function useFormDescriptionSuggestion() {
+    const procId = document.getElementById('procedureName')?.value || '';
+    const procedure = appState.procedures.find(p => p.id === procId);
+    if (procedure && procedure.description && procedure.description.trim()) {
+        applyAISuggestion('procedureDescription', procedure.description.trim());
+        return;
+    }
     applyAISuggestion('procedureDescription', generateProcedureDescriptionSuggestion(collectReportData()));
 }
 
@@ -716,6 +747,7 @@ function renderWizardStep(step) {
             `;
             break;
         case 6:
+            ensureWizardPredefinedDescription();
             html = `
                 <div class="wizard-step-content">
                     <h3 class="wizard-step-title">Paso 6: Descripción del Procedimiento</h3>
