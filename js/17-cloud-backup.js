@@ -437,11 +437,3 @@ function openCloudBackupModal() {
 
     modal.querySelector('#backupLoadBtn').addEventListener('click', () => loadLatestCloudBackup(true));
 }
-
-// Botón del menú Opciones (delegación: no depende del orden de carga del DOM).
-document.addEventListener('click', function (e) {
-    if (e.target.closest('#cloudBackupBtn')) {
-        e.preventDefault();
-        openCloudBackupModal();
-    }
-});

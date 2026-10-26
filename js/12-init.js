@@ -224,6 +224,9 @@ function attachMainEventListeners() {
                 case 'devicesBtn':
                     if (typeof showDevicesModal === 'function') showDevicesModal();
                     break;
+                case 'cloudBackupBtn':
+                    if (typeof openCloudBackupModal === 'function') openCloudBackupModal();
+                    break;
                 case 'exportBtn':
                     exportData();
                     break;
