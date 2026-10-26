@@ -202,7 +202,7 @@ function exportSharedData() {
         link.download = 'data.json';
         link.click();
         setTimeout(() => URL.revokeObjectURL(link.href), 1000);
-        showNotification('Descargado data.json. Publíquelo en el repositorio (script publicar-datos.ps1) para que todos vean los mismos datos.', 'success');
+        showNotification('Descargado data.json. Para publicarlo: doble clic en "publicar-datos.bat" (en la carpeta del proyecto). Todos los colegas lo verán al entrar.', 'success');
     } catch (error) {
         console.error('Error al exportar los datos compartidos:', error);
         showNotification('Error al exportar los datos compartidos', 'error');

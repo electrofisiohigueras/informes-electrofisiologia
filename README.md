@@ -18,7 +18,8 @@ procedimientos de electrofisiología y generar informes con formato.
   servicio) viven en `data.json` dentro de este mismo repositorio: **todos los
   colegas ven exactamente los mismos**. Se cargan solos al abrir la app.
   - Actualizarlos: **Opciones → Datos Comunes → Exportar datos compartidos**
-    (descarga `data.json`) y luego ejecutar `publicar-datos.ps1` (commit + push).
+    (descarga `data.json`) y luego doble clic en **`publicar-datos.bat`**
+    (commit + push automático; también funciona `publicar-datos.ps1`).
   - Traer la última versión publicada a cualquier equipo:
     **Opciones → Datos Comunes → Restaurar datos compartidos**.
 - **Ningún dato de paciente se ingresa ni se publica**: el informe final se
