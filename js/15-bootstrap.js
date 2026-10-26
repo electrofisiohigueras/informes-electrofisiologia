@@ -16,15 +16,11 @@ if (document.readyState === 'loading') {
         // Restaura estado guardado crea selects/checkboxes sin eventos:
         // recalcular los indicadores de pestaña tras el arranque.
         setTimeout(updateTabStatusDots, 80);
-        // Sincronización en la nube (js/17): baja datos nuevos del perfil si
-        // existen y son más recientes que la última sincronización local.
-        initCloudSyncAtStartup();
     });
 } else {
     (async () => {
         await initializeApp();
         setTimeout(updateTabStatusDots, 80);
-        initCloudSyncAtStartup();
     })();
 }
 
