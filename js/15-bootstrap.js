@@ -16,11 +16,14 @@ if (document.readyState === 'loading') {
         // Restaura estado guardado crea selects/checkboxes sin eventos:
         // recalcular los indicadores de pestaña tras el arranque.
         setTimeout(updateTabStatusDots, 80);
+        // Respaldos en la nube: se aplica siempre el último respaldo del equipo.
+        initCloudBackupAtStartup();
     });
 } else {
     (async () => {
         await initializeApp();
         setTimeout(updateTabStatusDots, 80);
+        initCloudBackupAtStartup();
     })();
 }
 

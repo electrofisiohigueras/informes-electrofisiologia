@@ -1,0 +1,183 @@
+{
+  "meta": {
+    "appVersion": "2.3.0",
+    "createdAt": "2026-10-26T20:06:26.507Z"
+  },
+  "state": {
+    "procedures": [
+      {
+        "id": "1792764213165",
+        "name": "Implante de marcapasos",
+        "code": "17.03.153",
+        "description": "Se infiltra la piel con lidocaína local, punción única  de vena  subclavia derecha. Se coloca electrodo de VD en septo derecho y posteriormente el electrodo auricular en la orejuela derecha. Se fija generador al plano muscular con seda, luego se cierra en 2 planos. Se da por terminado el procedimiento sin complicaciones.",
+        "createdAt": "2026-10-23T14:03:33.165Z"
+      }
+    ],
+    "templates": [],
+    "staff": [],
+    "commonData": {
+      "indications": [
+        "Reposo relativo por 24 hrs",
+        "Mantener vendaje compresivo por 24 hrs",
+        "Control en 7 días",
+        "Curaciones diarias",
+        "Mantener brazo en reposo"
+      ],
+      "communes": [
+        "Concepción",
+        "Talcahuano",
+        "Chiguayante",
+        "San Pedro de la Paz",
+        "Hualpén",
+        "Coronel",
+        "Lota",
+        "Tomé"
+      ],
+      "insurances": [
+        "FONASA",
+        "ISAPRE",
+        "Particular",
+        "FF.AA."
+      ],
+      "origins": [
+        "Consulta Externa",
+        "Urgencia",
+        "Hospitalización",
+        "Derivación"
+      ],
+      "entryDiagnoses": [
+        "Arritmia cardíaca",
+        "Bradiarritmia",
+        "Taquiarritmia",
+        "Fibrilación auricular",
+        "Bloqueo cardíaco"
+      ],
+      "exitDiagnoses": [
+        "Procedimiento exitoso",
+        "Implante de marcapasos",
+        "Ablación exitosa",
+        "Estudio electrofisiológico completado"
+      ],
+      "deviceBrands": [
+        "Medtronic",
+        "Boston Scientific",
+        "St. Jude Medical",
+        "Biotronik",
+        "Sorin",
+        "Vitatron"
+      ],
+      "deviceTypes": [
+        "Marcapaso",
+        "Resincronizador",
+        "Desfibrilador"
+      ],
+      "stimulationPolarities": [
+        "Bipolar",
+        "Unipolar",
+        "Extended Bipolar",
+        "LV Tip to RV Ring",
+        "LV Ring to RV Coil"
+      ],
+      "deviceModelsByTypeAndBrand": {
+        "Marcapaso": {
+          "Medtronic": [
+            "Azure",
+            "Advisa",
+            "Versa",
+            "Micra"
+          ],
+          "Boston Scientific": [
+            "Altrua",
+            "Ingenio",
+            "Accolade"
+          ],
+          "St. Jude Medical": [
+            "Assurity",
+            "Endurity",
+            "Microny"
+          ],
+          "Biotronik": [
+            "Edora",
+            "Elogia",
+            "Iperia"
+          ],
+          "Sorin": [
+            "Reply",
+            "Esprit",
+            "Ovatio"
+          ],
+          "Vitatron": [
+            "C-series",
+            "T-series",
+            "X-series"
+          ]
+        },
+        "Resincronizador": {
+          "Medtronic": [
+            "Claria",
+            "Viva",
+            "Crome"
+          ],
+          "Boston Scientific": [
+            "Intua",
+            "Visionist",
+            "Altrua"
+          ],
+          "St. Jude Medical": [
+            "Unify",
+            "Quadra",
+            "Fortify"
+          ],
+          "Biotronik": [
+            "Estella",
+            "Ilesto",
+            "Etrinsa"
+          ],
+          "Sorin": [
+            "Paradym",
+            "Platinum",
+            "Reply CRT"
+          ],
+          "Vitatron": [
+            "C40",
+            "T65",
+            "X80"
+          ]
+        },
+        "Desfibrilador": {
+          "Medtronic": [
+            "Evera",
+            "Viva",
+            "Crome"
+          ],
+          "Boston Scientific": [
+            "Emblem",
+            "Inogen",
+            "Vitalio"
+          ],
+          "St. Jude Medical": [
+            "Ellipse",
+            "Fortify",
+            "Unify"
+          ],
+          "Biotronik": [
+            "Ilesto",
+            "Iperia",
+            "Etrinsa"
+          ],
+          "Sorin": [
+            "Platinum",
+            "Paradym",
+            "Ovatio"
+          ],
+          "Vitatron": [
+            "C-series ICD",
+            "T-series ICD",
+            "X-series ICD"
+          ]
+        }
+      }
+    },
+    "formState": {}
+  }
+}

@@ -207,15 +207,18 @@ function saveProcedure() {
                 procedure.name = name;
                 procedure.code = code;
                 procedure.description = description || '';
+                procedure.updatedAt = new Date().toISOString();
             }
             appState.editingProcedureId = null;
         } else {
+            const now = new Date().toISOString();
             const newProcedure = {
                 id: Date.now().toString(),
                 name,
                 code,
                 description: description || '',
-                createdAt: new Date().toISOString()
+                createdAt: now,
+                updatedAt: now
             };
             appState.procedures.push(newProcedure);
         }

@@ -66,6 +66,7 @@ async function saveCurrentTemplate() {
         id: Date.now().toString(), 
         name, 
         date: new Date().toISOString(), 
+        updatedAt: new Date().toISOString(),
         data: templateData,
         version: '2.0'
     };
@@ -188,7 +189,7 @@ function saveStaff() {
         showNotification('Por favor, complete los campos obligatorios (Nombre, Rol)', 'error');
         return;
     }
-    const newStaff = { id: Date.now().toString(), name, role, createdAt: new Date().toISOString() };
+    const newStaff = { id: Date.now().toString(), name, role, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() };
     appState.staff.push(newStaff);
     saveAllData();
     renderStaffCheckboxes();

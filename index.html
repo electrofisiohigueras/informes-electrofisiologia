@@ -58,6 +58,9 @@
                             <button id="devicesBtn">
                                 <i class="fas fa-microchip mr-2"></i> Dispositivos
                             </button>
+                            <button id="cloudBackupBtn">
+                                <i class="fas fa-cloud-upload-alt mr-2"></i> Respaldos en la nube
+                            </button>
                             <button id="exportBtn">
                                 <i class="fas fa-file-export mr-2"></i> Exportar
                             </button>
@@ -85,11 +88,8 @@
                     <div class="flex justify-between items-center mb-4">
                         <h2 class="section-title">Gestión de Datos Comunes</h2>
                         <div class="flex flex-wrap items-center gap-2">
-                            <button id="restoreCatalogsBtn" class="btn btn-primary" title="Vuelve a cargar los datos universales publicados en GitHub (catálogos, procedimientos, plantillas y personal)">
-                                <i class="fas fa-cloud-arrow-down mr-1"></i> Restaurar datos compartidos
-                            </button>
-                            <button id="exportSharedDataBtn" class="btn btn-secondary" title="Descarga el data.json con tus catálogos, procedimientos, plantillas y personal para publicarlo en el repositorio: quedarán iguales para todos los colegas">
-                                <i class="fas fa-file-export mr-1"></i> Exportar datos compartidos
+                            <button id="restoreCatalogsBtn" class="btn btn-primary" title="Vuelve a cargar los catálogos compartidos publicados en GitHub (comunas, diagnósticos, marcas/tipos de dispositivos, etc.)">
+                                <i class="fas fa-cloud-arrow-down mr-1"></i> Restaurar catálogos
                             </button>
                             <button id="backFromCommonDataBtn" class="btn btn-secondary">
                                 <i class="fas fa-arrow-left mr-1"></i> Volver
@@ -581,5 +581,6 @@
     <script src="js/14-form-helpers.js"></script>
     <script src="js/15-bootstrap.js"></script>
     <script src="js/16-wizard.js"></script>
+    <script src="js/17-cloud-backup.js"></script>
 </body>
 </html>

@@ -11,7 +11,7 @@
 //
 // Al publicar una nueva versión de la app, actualizar SW_VERSION para que el
 // caché viejo se elimine en la activación y los colegas reciban los cambios.
-const SW_VERSION = '2.2.0';
+const SW_VERSION = '2.3.0';
 const CORE_CACHE = 'im-core-' + SW_VERSION;
 const DATA_CACHE = 'im-data-' + SW_VERSION;
 const CACHE_PREFIXES = ['im-core-', 'im-data-'];
@@ -44,7 +44,8 @@ const CORE_ASSETS = [
     './js/13-report.js',
     './js/14-form-helpers.js',
     './js/15-bootstrap.js',
-    './js/16-wizard.js'
+    './js/16-wizard.js',
+    './js/17-cloud-backup.js'
 ];
 
 // ---- Install: precache de todos los assets de la app ----

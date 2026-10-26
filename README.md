@@ -11,17 +11,24 @@ procedimientos de electrofisiología y generar informes con formato.
 ## Persistencia y datos compartidos
 
 - **Para el colega**: no hay registro, ni login, ni configuración. Se abre el
-  link y se trabaja. El formulario en curso, el personal y las plantillas que
-  ese colega haya cargado quedan guardados **en su navegador** (`localStorage`),
-  con autoguardado cada 30 s.
-- **Datos universales** (catálogos, procedimientos, plantillas y personal del
-  servicio) viven en `data.json` dentro de este mismo repositorio: **todos los
-  colegas ven exactamente los mismos**. Se cargan solos al abrir la app.
-  - Actualizarlos: **Opciones → Datos Comunes → Exportar datos compartidos**
-    (descarga `data.json`) y luego doble clic en **`publicar-datos.bat`**
-    (commit + push automático; también funciona `publicar-datos.ps1`).
-  - Traer la última versión publicada a cualquier equipo:
-    **Opciones → Datos Comunes → Restaurar datos compartidos**.
+  link y se trabaja. El formulario en curso y los catálogos que ese colega
+  haya cargado quedan guardados **en su navegador** (`localStorage`), con
+  autoguardado cada 30 s.
+- **Respaldos en la nube** (carpeta `backups/` de este mismo repositorio):
+  cada respaldo es una **instantánea completa** del equipo (procedimientos con
+  sus descripciones, personal, plantillas, catálogos y el formulario en
+  curso) y **gana el más nuevo**.
+  - **Respaldar**: Opciones → **Respaldos en la nube** → "Respaldar ahora".
+    Requiere un token de GitHub (fine-grained, Contents leer/escribir solo en
+    este repo) pegado una vez en el mismo modal; queda únicamente en ese
+    navegador. Antes de escribir, la app fusiona con el último respaldo, así
+    que no se pierde lo que agregó otro colega.
+  - **Cargar**: "Cargar último respaldo" (o al abrir la app, que aplica
+    siempre el último respaldo del equipo). No requiere token. Antes de
+    pisar el estado local se guarda una copia de seguridad recuperable con
+    el botón "Importar".
+  - Los borrados de registros no se propagan por respaldo; para eso está
+    "Restaurar catálogos" (data.json).
 - **Ningún dato de paciente se ingresa ni se publica**: el informe final se
   pega en el sistema institucional (Medicap), que cuenta con los estándares de
   seguridad correspondientes.

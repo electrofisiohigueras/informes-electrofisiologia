@@ -94,16 +94,10 @@ function attachCommonDataSectionEventListeners() {
             }
         }
     });
-    // Botón "Restaurar datos compartidos" (solo versión publicada en HTTPS)
+    // Botón "Restaurar catálogos desde la web" (solo versión publicada en HTTPS)
     const restoreBtn = document.getElementById('restoreCatalogsBtn');
     if (restoreBtn) {
         restoreBtn.addEventListener('click', restoreCatalogsFromWeb);
-    }
-
-    // Botón "Exportar datos compartidos": descarga el data.json publicable
-    const exportSharedBtn = document.getElementById('exportSharedDataBtn');
-    if (exportSharedBtn) {
-        exportSharedBtn.addEventListener('click', exportSharedData);
     }
 }
 
@@ -149,12 +143,12 @@ function applySharedCatalogs(data) {
 
 async function restoreCatalogsFromWeb() {
     if (window.location.protocol === 'file:') {
-        showNotification('Restaurar datos compartidos requiere la versión publicada (URL de GitHub Pages). En la copia local los datos dependen de data.json y localStorage.', 'info');
+        showNotification('Restaurar catálogos requiere la versión publicada (URL de GitHub Pages). En la copia local los catálogos dependen de data.json y localStorage.', 'info');
         return;
     }
     const ok = await showConfirmDialog(
-        'Restaurar datos compartidos',
-        'Se reemplazarán los datos universales por la versión publicada en GitHub: catálogos (comunas, previsiones, procedencias, diagnósticos, marcas/tipos de dispositivos e indicaciones), procedimientos, plantillas y personal. Lo que haya agregado localmente en esas listas se perderá.',
+        'Restaurar catálogos',
+        'Se reemplazarán los catálogos compartidos (comunas, previsiones, procedencias, diagnósticos, marcas/tipos de dispositivos e indicaciones) por la versión publicada en GitHub. Los elementos agregados localmente en esas listas se perderán.',
         { confirmText: 'Restaurar', cancelText: 'Cancelar' }
     );
     if (!ok) return;
@@ -164,48 +158,13 @@ async function restoreCatalogsFromWeb() {
         if (!response.ok) throw new Error('data.json HTTP ' + response.status);
         const data = await response.json();
         if (!applySharedCatalogs(data)) throw new Error('estructura de catálogos no reconocida');
-        // Registros universales: reemplazo estricto por la versión publicada.
-        applyUniversalSharedData(data, { replace: true });
         saveAllData();
         updateCommonDataDropdowns();
         updateCommonDataLists();
-        showNotification('Datos compartidos restaurados desde la versión publicada', 'success');
+        showNotification('Catálogos restaurados desde la versión publicada', 'success');
     } catch (error) {
-        console.error('Error al restaurar datos compartidos:', error);
-        showNotification('No se pudieron restaurar los datos compartidos. Verifique su conexión e intente nuevamente.', 'error');
-    }
-}
-
-// Exporta el estado actual como data.json listo para publicar en el
-// repositorio: catálogos + procedimientos + plantillas + personal.
-// Al publicarlo, TODOS los colegas ven exactamente los mismos datos.
-function exportSharedData() {
-    try {
-        // Se publica el set universal de mediciones (el publicado en el repo),
-        // no el que alguien haya editado para un informe puntual.
-        const measurements = (predefinedData && Array.isArray(predefinedData.defaultMeasurements) && predefinedData.defaultMeasurements.length)
-            ? predefinedData.defaultMeasurements
-            : (appState.measurements || []);
-
-        const payload = {
-            defaultMeasurements: measurements,
-            commonData: appState.commonData,
-            procedures: appState.procedures || [],
-            templates: appState.templates || [],
-            staff: appState.staff || []
-        };
-
-        const dataStr = JSON.stringify(payload, null, 2);
-        const blob = new Blob([dataStr], { type: 'application/json' });
-        const link = document.createElement('a');
-        link.href = URL.createObjectURL(blob);
-        link.download = 'data.json';
-        link.click();
-        setTimeout(() => URL.revokeObjectURL(link.href), 1000);
-        showNotification('Descargado data.json. Para publicarlo: doble clic en "publicar-datos.bat" (en la carpeta del proyecto). Todos los colegas lo verán al entrar.', 'success');
-    } catch (error) {
-        console.error('Error al exportar los datos compartidos:', error);
-        showNotification('Error al exportar los datos compartidos', 'error');
+        console.error('Error al restaurar catálogos:', error);
+        showNotification('No se pudieron restaurar los catálogos. Verifique su conexión e intente nuevamente.', 'error');
     }
 }
 
