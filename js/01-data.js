@@ -9,7 +9,7 @@
 
 // Versión visible en el header; bump en cada release publicada.
 // Mantener sincronizado con SW_VERSION en sw.js (cambia el caché de la PWA).
-const APP_VERSION = '2.1.0';
+const APP_VERSION = '2.2.0';
 
 let predefinedData = {};
 let defaultMeasurements = [];
@@ -42,8 +42,53 @@ async function loadPredefinedData() {
     }
 }
 
+// ===================================================================
+// 1.1 DATOS UNIVERSALES COMPARTIDOS (publicados en data.json)
+// ===================================================================
+// Procedimientos, plantillas y personal son datos UNIVERSALES: viven en el
+// repositorio y todos los colegas ven exactamente lo mismo (sin registro ni
+// configuración: se abren al cargar la app).
+//
+// Al cargar: la versión publicada reemplaza a la local del mismo id y los
+// registros locales que NO están publicados se conservan (no se pierde
+// trabajo en silencio). Con replace:true se aplica la versión publicada tal
+// cual (botón "Restaurar datos compartidos").
+function mergeUniversalRecords(localList, sharedList, replace) {
+    if (!Array.isArray(sharedList)) return localList || [];
+    if (replace) return sharedList.slice();
+    const sharedIds = new Set(sharedList.map(item => String(item.id)));
+    const localOnly = (localList || []).filter(item => !sharedIds.has(String(item.id)));
+    return [...sharedList, ...localOnly];
+}
+
+function applyUniversalSharedData(data, options = {}) {
+    if (!data) return false;
+    const replace = !!options.replace;
+    let touched = false;
+
+    if (Array.isArray(data.procedures) && (data.procedures.length > 0 || !replace)) {
+        appState.procedures = mergeUniversalRecords(appState.procedures, data.procedures, replace);
+        touched = true;
+    }
+    if (Array.isArray(data.templates) && (data.templates.length > 0 || !replace)) {
+        appState.templates = mergeUniversalRecords(appState.templates, data.templates, replace);
+        touched = true;
+    }
+    if (Array.isArray(data.staff) && (data.staff.length > 0 || !replace)) {
+        appState.staff = mergeUniversalRecords(appState.staff, data.staff, replace);
+        touched = true;
+    }
+
+    if (touched) {
+        if (typeof updateProcedureDropdown === 'function') updateProcedureDropdown();
+        if (typeof updateTemplatesDropdown === 'function') updateTemplatesDropdown();
+        if (typeof renderStaffCheckboxes === 'function') renderStaffCheckboxes();
+    }
+    return touched;
+}
+
 const fallbackData = {
-            defaultMeasurements: [
+    defaultMeasurements: [
                 {
                     id: 1,
                     name: "Ventrículo derecho",

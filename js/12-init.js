@@ -23,6 +23,10 @@ async function initializeApp() {
     // 4. Cargar datos guardados
     loadAllData();
 
+    // 4b. Datos universales publicados en el repo (data.json): procedimientos,
+    // plantillas y personal compartidos por todos los colegas.
+    applyUniversalSharedData(predefinedData);
+
     // 5. Configurar tiempos por defecto
     setDefaultTimes();
 

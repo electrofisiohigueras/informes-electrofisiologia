@@ -88,5 +88,8 @@
         "Vitatron": ["C-series ICD", "T-series ICD", "X-series ICD"]
       }
     }
-  }
+  },
+  "procedures": [],
+  "templates": [],
+  "staff": []
 }

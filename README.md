@@ -8,15 +8,24 @@ procedimientos de electrofisiología y generar informes con formato.
   con formato (listo para pegar en Medicap conservando colores y tablas).
 - **Imprimir** usa el menú del navegador (formato carta).
 
-## Persistencia y privacidad
+## Persistencia y datos compartidos
 
-- Todo se guarda **localmente en el navegador** (`localStorage`): datos comunes,
-  procedimientos, personal, plantillas y el informe en curso.
-- **Ninguna información viaja a un servidor** y ningún dato de paciente se
-  ingresa: el informe final se pega en el sistema institucional, que cuenta con
-  los estándares de seguridad correspondientes.
-- **Respaldo**: botón "Respaldar datos" (guardar JSON) e "Importar" para
-  restaurar. Se sugiere respaldar al menos una vez por semana.
+- **Para el colega**: no hay registro, ni login, ni configuración. Se abre el
+  link y se trabaja. El formulario en curso, el personal y las plantillas que
+  ese colega haya cargado quedan guardados **en su navegador** (`localStorage`),
+  con autoguardado cada 30 s.
+- **Datos universales** (catálogos, procedimientos, plantillas y personal del
+  servicio) viven en `data.json` dentro de este mismo repositorio: **todos los
+  colegas ven exactamente los mismos**. Se cargan solos al abrir la app.
+  - Actualizarlos: **Opciones → Datos Comunes → Exportar datos compartidos**
+    (descarga `data.json`) y luego ejecutar `publicar-datos.ps1` (commit + push).
+  - Traer la última versión publicada a cualquier equipo:
+    **Opciones → Datos Comunes → Restaurar datos compartidos**.
+- **Ningún dato de paciente se ingresa ni se publica**: el informe final se
+  pega en el sistema institucional (Medicap), que cuenta con los estándares de
+  seguridad correspondientes.
+- **Respaldo local**: botón "Respaldar datos" (guardar JSON) e "Importar" para
+  restaurar el estado de un equipo.
 
 ## Instalación / actualizaciones
 
@@ -27,16 +36,14 @@ procedimientos de electrofisiología y generar informes con formato.
   al refrescar la página (la versión visible en el header indica el nivel).
 - La copia local alternativa sigue funcionando abriendo `index.html`
   directo (sin service worker ni catálogos por la web).
-- Los catálogos compartidos (comunas, previsiones, diagnósticos, dispositivos)
-  se publican en `data.json`; cada usuario puede traerlos al día con
-  **Opciones → Datos Comunes → Restaurar catálogos**.
 
 ## Técnico
 
 - Vanilla JS (16 módulos `js/` cargados en orden, sin build), Tailwind CSS y
   Font Awesome incluidos localmente en `vendor/` (no requiere internet).
-- Catálogos base editables en `data.json`; las mediciones por defecto viven
-  allí y en `js/01-data.js` (fallback para uso offline sin servidor).
+- Catálogos base y datos universales editables en `data.json`; las mediciones
+  por defecto viven allí y en `js/01-data.js` (fallback para uso offline sin
+  servidor).
 - PWA: `manifest.json` + `sw.js` (precache de assets, network-first para
   `data.json`). Versión del caché en `SW_VERSION`; al publicar cambios de
   código bump de `APP_VERSION` (js/01-data.js) y de `SW_VERSION` (sw.js).
