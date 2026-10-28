@@ -11,7 +11,7 @@
 //
 // Al publicar una nueva versión de la app, actualizar SW_VERSION para que el
 // caché viejo se elimine en la activación y los colegas reciban los cambios.
-const SW_VERSION = '2.3.2';
+const SW_VERSION = '2.3.3';
 const CORE_CACHE = 'im-core-' + SW_VERSION;
 const DATA_CACHE = 'im-data-' + SW_VERSION;
 const CACHE_PREFIXES = ['im-core-', 'im-data-'];

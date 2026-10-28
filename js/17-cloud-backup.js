@@ -434,9 +434,11 @@ function openCloudBackupModal() {
                 status.textContent = stamp.slice(0, 19).replace('T', ' ') + ' (' + result.fileName + ')';
             }
         } else if (result.reason === 'token') {
-            showNotification('El token fue rechazado por GitHub (401/403). Verifique permisos y vigencia.', 'error');
+            showNotification('GitHub rechazó el token (401/403). Verifica que el token esté finalizado (pide contraseña o 2FA al crearlo) y que tenga Contents: Read and write sobre electrofisiohigueras/informes-electrofisiologia.', 'error');
         } else if (result.reason === 'conflict') {
-            showNotification('Conflicto al escribir el respaldo. Intente nuevamente.', 'error');
+            showNotification('Conflicto al escribir el respaldo (otro equipo respaldó al mismo tiempo). Intente nuevamente.', 'error');
+        } else if (result.reason === 'http:404') {
+            showNotification('El token no tiene acceso a este repositorio (404). Selecciónalo explícitamente al crear el token.', 'error');
         } else {
             showNotification('No se pudo respaldar (' + result.reason + ').', 'error');
         }
