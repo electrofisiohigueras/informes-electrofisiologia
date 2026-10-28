@@ -378,6 +378,13 @@ function openCloudBackupModal() {
                         Fine-grained, con permiso <strong>Contents: Read and write</strong> solo en este repositorio.
                         Se guarda únicamente en este navegador. Para <em>cargar</em> el último respaldo no hace falta token.
                     </p>
+                    <p class="text-xs text-gray-600 mt-1">
+                        <a href="https://github.com/settings/personal-access-tokens/new" target="_blank" rel="noopener noreferrer" class="text-blue-600 underline">
+                            Crear token (GitHub → Settings → Developer settings → Fine-grained tokens)
+                        </a>
+                        <br>Repo: <code>${escapeHtml(BACKUP_REPO)}</code> · permiso <strong>Contents: Read and write</strong>.
+                        Para respaldar, el usuario debe ser colaborador con escritura en ese repo.
+                    </p>
                 </div>
                 <div class="form-group">
                     <label class="form-label">Último respaldo</label>
